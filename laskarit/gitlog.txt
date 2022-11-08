@@ -1,0 +1,105 @@
+commit 38b710bae77e7b119bf4597e1ea777ec57189c42
+Author: Gabriel <33664278+gabrot@users.noreply.github.com>
+Date:   Tue Nov 8 09:59:03 2022 +0200
+
+    poistettu file 1 ja uudelleen nimettu file2
+
+ tiedostoja/file2             | 0
+ tiedostoja/{file1 => file22} | 0
+ 2 files changed, 0 insertions(+), 0 deletions(-)
+
+commit 92ce71bcdb836aee547e18c0c7b5c6e420350913
+Author: Gabriel <33664278+gabrot@users.noreply.github.com>
+Date:   Tue Nov 8 09:52:30 2022 +0200
+
+    Luotu file1 file2 file3
+
+ tiedostoja/file1 | 0
+ tiedostoja/file2 | 0
+ tiedostoja/file3 | 0
+ 3 files changed, 0 insertions(+), 0 deletions(-)
+
+commit 2215c59401f81cb0ba4ccef4e19f509dbeca5499
+Author: Gabriel <33664278+gabrot@users.noreply.github.com>
+Date:   Tue Nov 8 09:38:48 2022 +0200
+
+    Poistettu tekstikä eka.txt ja lisätty tekstiä kolmas.txt
+
+ eka.txt    | 145 -------------------------------------------------------------
+ kolmas.txt |  11 +++++
+ 2 files changed, 11 insertions(+), 145 deletions(-)
+
+commit 4c7e61cb496c5aae0fe7d7178cfb44bec1ba30b8
+Author: Gabriel <33664278+gabrot@users.noreply.github.com>
+Date:   Mon Nov 7 20:27:18 2022 +0200
+
+    muutettu tiedosto.txt nimi -> eka.txt
+
+ tiedosto.txt => eka.txt | 0
+ 1 file changed, 0 insertions(+), 0 deletions(-)
+
+commit 35eb5490ed1a35cbc8fc27fb391f2fe1140caa73
+Author: Gabriel <33664278+gabrot@users.noreply.github.com>
+Date:   Mon Nov 7 20:23:21 2022 +0200
+
+    poistettu toinen.txt
+
+ toinen.txt | 1 -
+ 1 file changed, 1 deletion(-)
+
+commit cb00c671195587f424053af2a43d6bd26b22e7a9
+Author: Gabriel <33664278+gabrot@users.noreply.github.com>
+Date:   Mon Nov 7 20:21:37 2022 +0200
+
+    more loerem ipsum text
+
+ tiedosto.txt | 22 +++++++++++++++++-----
+ 1 file changed, 17 insertions(+), 5 deletions(-)
+
+commit 8ec2a9461480d6015a162b06e0ce7a78150a3445
+Author: Gabriel <33664278+gabrot@users.noreply.github.com>
+Date:   Mon Nov 7 20:19:55 2022 +0200
+
+    loerem ipsum text
+
+ kolmas.txt   |   1 +
+ tiedosto.txt | 207 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ toinen.txt   |   1 +
+ 3 files changed, 209 insertions(+)
+
+commit 3a579ffa80d2aeb90b7b1ca2116ead3d047ff0fc
+Author: Gabriel <33664278+gabrot@users.noreply.github.com>
+Date:   Mon Nov 7 19:52:33 2022 +0200
+
+    luotu hakemisto stuff ja hakemistoon stuff.txt
+
+ stuff/stuff.txt | 0
+ 1 file changed, 0 insertions(+), 0 deletions(-)
+
+commit f410faac09727267823bc1c495f0534230b02159
+Author: Gabriel <33664278+gabrot@users.noreply.github.com>
+Date:   Mon Nov 7 19:39:53 2022 +0200
+
+    kolmas.txt luotu
+
+ kolmas.txt | 0
+ 1 file changed, 0 insertions(+), 0 deletions(-)
+
+commit b584781f74bb588d1655567640bbd5e7351be327
+Author: Rothberg Gabriel <garo@melkki.cs.helsinki.fi>
+Date:   Mon Nov 7 19:33:54 2022 +0200
+
+    muutos ja lisäys
+
+ tiedosto.txt | 9 +++++++++
+ toinen.txt   | 0
+ 2 files changed, 9 insertions(+)
+
+commit d8fff35bf497664d52578809459a1d06f278569b
+Author: Rothberg Gabriel <garo@melkki.cs.helsinki.fi>
+Date:   Mon Nov 7 19:25:11 2022 +0200
+
+    tiedosto.txt luotu
+
+ tiedosto.txt | 0
+ 1 file changed, 0 insertions(+), 0 deletions(-)

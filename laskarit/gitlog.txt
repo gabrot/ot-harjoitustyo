@@ -1,3 +1,5 @@
+mentiin epäsynkroniin
+
 commit 38b710bae77e7b119bf4597e1ea777ec57189c42
 Author: Gabriel <33664278+gabrot@users.noreply.github.com>
 Date:   Tue Nov 8 09:59:03 2022 +0200

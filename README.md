@@ -4,3 +4,5 @@
 [gitlog.txt](laskarit/gitlog.txt)  
 [komentorivi.txt](laskarit/gitlog.txt)  
 ### Viikko 2
+  
+  # Paikallisen ja etärepositorion epäsynkrooni

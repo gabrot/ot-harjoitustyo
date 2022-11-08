@@ -86,7 +86,7 @@ Date:   Mon Nov 7 19:39:53 2022 +0200
  1 file changed, 0 insertions(+), 0 deletions(-)
 
 commit b584781f74bb588d1655567640bbd5e7351be327
-Author: Rothberg Gabriel <garo@melkki.cs.helsinki.fi>
+Author: Gabriel <garo@melkki.cs.helsinki.fi>
 Date:   Mon Nov 7 19:33:54 2022 +0200
 
     muutos ja lisäys
@@ -96,7 +96,7 @@ Date:   Mon Nov 7 19:33:54 2022 +0200
  2 files changed, 9 insertions(+)
 
 commit d8fff35bf497664d52578809459a1d06f278569b
-Author: Rothberg Gabriel <garo@melkki.cs.helsinki.fi>
+Author: Gabriel <garo@melkki.cs.helsinki.fi>
 Date:   Mon Nov 7 19:25:11 2022 +0200
 
     tiedosto.txt luotu

@@ -4,9 +4,6 @@ Ohjelmistotekniikka, **syksy** *2022* etärepositorio
 ### Viikko 1
 [gitlog.txt](laskarit/viikko1/gitlog.txt)  
 [komentorivi.txt](laskarit/viikko1/gitlog.txt)  
-### Viikko 2
-<<<<<<< HEAD
-[Coverage report.png](laskarit/viikko2/Coverage report.png)  
-=======
-  
->>>>>>> main
+### Viikko 2  
+[Coverage report.png](laskarit/viikko2/Coverage-report.png)  
+

@@ -1,7 +1,7 @@
 # Ohjelmistoteknikka, harjoitustyö
 Ohjelmistotekniikka, **syksy** *2022* etärepositorio  
 ## Dokumentaatio
-[Vaatimusmäärittely](ldokumentaatio/maarittelydokumentti.md)  
+[Vaatimusmäärittely](dokumentaatio/maarittelydokumentti.md)  
 [Työaikakirjanpito](dokumentaatio/työaikakirjanpito.md)  
   
 ## Tehtävät

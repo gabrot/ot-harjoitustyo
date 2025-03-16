@@ -2,7 +2,9 @@
 
 Tässä projektissa toteutetaan ohjelmistotekniikan kurssin harjoitustyö.
 
-[Laskarit](./laskarit/viikko1.md)
+## 🗂️ Viikkoharjoitukset
+
+**[Laskarit-kansio](./laskarit/)** sisältää kurssin viikkoharjoitukset.
 
 # ScanFlow
 

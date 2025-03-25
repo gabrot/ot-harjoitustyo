@@ -4,15 +4,16 @@ Tässä projektissa toteutetaan ohjelmistotekniikan kurssin harjoitustyö.
 
 ## 🗂️ Viikkoharjoitukset
 
-**[Laskarit-kansio](./laskarit/)** sisältää kurssin viikkoharjoitukset.
+**[Laskarit-kansio](./laskarit/)** sisältää kurssin viikkoharjoitukset ja niihin liittyvät materiaalit viikkojen mukaan jaoteltuina:
 
-# ScanFlow
+- [Viikko 1](./laskarit/viikko1/viikko1.md)
+- [Viikko 2](./laskarit/viikko2/)
 
-**ScanFlow** on ohjelmistotekniikan harjoitustyö, joka keskittyy skannattujen PDF-tiedostojen käsittelyyn ja muokkaamiseen. Sovellus tarjoaa tehokkaita työkaluja suurten dokumenttien jakamiseen ja hallintaan.
+## 📚 Dokumentaatio
 
-## Ominaisuudet
-- **PDF-tiedostojen jakaminen**: Jaa suuret PDF-dokumentit pienempiin osiin esimerkiksi kahden sivun ryhmissä (1-2, 3-4, 5-6, ...).
-- **Dokumenttien analysointi**: Tunnistaa dokumenttien sisällön ja metadatan.
-- **Mukautettava jakologiikka**: Voidaan määritellä erilaisia jakosääntöjä (esim. 1-2, 3-5, 6-9).
-- **OCR-tunnistus (tuleva ominaisuus)**: Mahdollisuus tekstintunnistukseen skannatuista dokumenteista.
+Projektin dokumentaatio sijaitsee [dokumentaatio-kansiossa](./laskarit/dokumentaatio/) ja sisältää seuraavat dokumentit:
 
+- [Vaatimusmäärittely](./laskarit/dokumentaatio/vaatimusmaarittely.md)
+- [Käyttöohje](./laskarit/dokumentaatio/kayttoohje.md)
+- [Changelog](./laskarit/dokumentaatio/changelog.md)
+- [Tuntikirjanpito](./laskarit/dokumentaatio/tuntikirjanpito.md)

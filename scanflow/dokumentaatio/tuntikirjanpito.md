@@ -14,5 +14,5 @@
 | 29.03.2025 | 3.0               | Sovelluksen toiminnallisuuden koodaus, toiminnallisuuksien laajennus |
 | 30.03.2025 | 2.5               | Testien rakentamista ja koodin laadun parantamista |
 | 31.03.2025 | 2.5               | Testien rakentamista ja koodin laadun parantamista |
-| 1.04.2025 | 5               | Testien viimeistely ja koodin läpikäynti |
+| 01.04.2025 | 5               | Testien viimeistely ja koodin läpikäynti |
 | Yhteensä   | 44.5       

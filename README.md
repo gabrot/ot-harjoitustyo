@@ -8,12 +8,15 @@ Tässä projektissa toteutetaan ohjelmistotekniikan kurssin harjoitustyö.
 
 - [Viikko 1](./laskarit/viikko1/viikko1.md)
 - [Viikko 2](./laskarit/viikko2/)
+- [Viikko 3](./laskarit/viikko3/)
 
 ## 📚 Dokumentaatio
 
-Projektin dokumentaatio sijaitsee [dokumentaatio-kansiossa](./laskarit/dokumentaatio/) ja sisältää seuraavat dokumentit:
+Projektin dokumentaatio sijaitsee [dokumentaatio-kansiossa](./scanflow/dokumentaatio/) ja sisältää seuraavat dokumentit:
 
-- [Vaatimusmäärittely](./laskarit/dokumentaatio/vaatimusmaarittely.md)
-- [Käyttöohje](./laskarit/dokumentaatio/kayttoohje.md)
-- [Changelog](./laskarit/dokumentaatio/changelog.md)
-- [Tuntikirjanpito](./laskarit/dokumentaatio/tuntikirjanpito.md)
+- [Vaatimusmäärittely](./scanflow/dokumentaatio/vaatimusmaarittely.md)
+
+- [Arkkitehtuuri](./scanflow/dokumentaatio/arkkitehtuuri.md)
+- [Käyttöohje](./scanflow/dokumentaatio/kayttoohje.md)
+- [Changelog](./scanflow/dokumentaatio/changelog.md)
+- [Tuntikirjanpito](./scanflow/dokumentaatio/tuntikirjanpito.md)

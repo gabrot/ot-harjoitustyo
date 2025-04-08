@@ -1,14 +1,5 @@
-# Ohjelmistotekniikka – Harjoitustyö
-
-Tämä projekti on osa Helsingin yliopiston ohjelmistotekniikan kurssia. Projektissa toteutetaan harjoitustyö, jonka aikana kehitetään dokumentoitu, testattu ja ylläpidettävä ohjelmisto.
-
-## Viikkoharjoitukset
-
-**[Laskarit-kansio](./laskarit/)** sisältää viikkokohtaiset harjoitukset ja materiaalit:
-
-- [Viikko 1](./laskarit/viikko1/viikko1.md)
-- [Viikko 2](./laskarit/viikko2/)
-- [Viikko 3](./laskarit/viikko3/viikko3.md)
+# Scanflow - PDF-jakaja
+Scanflow tarjoaa käyttäjäystävällisen ratkaisun PDF-tiedostojen jakamiseen. Käyttäjä voi jakaa kokonaiset PDF-tiedostot pienempiin osiin, kuten yksittäisiksi sivuiksi tai määriteltyjen sivujoukkojen perusteella.
 
 ## 📚 Dokumentaatio
 

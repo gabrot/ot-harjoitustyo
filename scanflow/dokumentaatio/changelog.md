@@ -1,6 +1,11 @@
 # Changelog
 
-## 0.1.0
+## Viikko 4
+
+- Päivitetty PDF-jakamispalvelu, joka tukee PDF jakamista eri kokoisiin osiin
+
+
+## Viikko 3
 
 - Luotu sovelluksen perusrakenne ja komponentit
 - Toteutettu PDF-tiedostojen valinta ja lataaminen

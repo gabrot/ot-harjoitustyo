@@ -173,9 +173,11 @@ class PdfSplitterApp:
             to=100,
             textvariable=self.fixed_pages_count,
             width=5,
-            wrap=True
+            wrap=True,
+            command=self._update_fixed_info  # Add command to update when value changes
         )
         pages_spinbox.pack(side=tk.RIGHT)
+        pages_spinbox.bind("<FocusOut>", lambda e: self._update_fixed_info())  # Add FocusOut binding
         
         # Infoteksti
         self.fixed_info_frame = ttk.Frame(self.fixed_ranges_frame, style="InfoBox.TFrame")

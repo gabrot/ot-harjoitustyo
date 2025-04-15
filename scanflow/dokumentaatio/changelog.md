@@ -1,5 +1,11 @@
 # Changelog
 
+## Viikko 5
+- Uudistettu käyttöliittymä
+- Optimoitu koodia
+- Toteutettu testit
+- Toteutettu drag & drop -ominaisuus
+
 ## Viikko 4
 
 - Päivitetty PDF-jakamispalvelu, joka tukee PDF jakamista eri kokoisiin osiin

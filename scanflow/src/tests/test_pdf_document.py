@@ -1,19 +1,33 @@
-"""PDF-dokumentin yksikkötestit."""
-import pytest
-import os
-from src.entities.pdf_document import PDFDocument
+import unittest
+from ..entities.pdf_document import PDFDocument
 
-class TestPDFDocument:
-    """Testaa PDF-dokumentin toiminnallisuudet."""
 
-    def test_pdf_document_creation(self):
-        """Testaa PDF-dokumentin luominen."""
-        test_path = "/path/to/test.pdf"
-        test_page_count = 5
+class TestPDFDocument(unittest.TestCase):
+    """Testiluokka PDFDocument-luokan perustoiminnallisuuden testaamiseen.
 
-        # Luo PDF-dokumentti
-        pdf_doc = PDFDocument(test_path, test_page_count)
+    Varmistaa, että luokan konstruktori alustaa olion attribuutit
+    (tiedostopolku ja sivumäärä) oikein annetuilla arvoilla.
+    """
 
-        # Varmista attribuuttien oikeellisuus
-        assert pdf_doc.file_path == test_path
-        assert pdf_doc.page_count == test_page_count
+    def test_constructor_sets_attributes_correctly(self):
+        """Testaa, että konstruktori asettaa tiedostopolun ja sivumäärän oikein.
+
+        Tämä testi luo PDFDocument-olion tietyillä syötteillä ja tarkistaa,
+        että olion 'file_path' ja 'page_count' -attribuutit vastaavat
+        annettuja arvoja. Testi varmistaa luokan perusdatan säilömisen.
+        """
+        file_path = "/polku/dokumentti.pdf"
+        page_count = 10
+
+        document = PDFDocument(file_path, page_count)
+
+        self.assertEqual(
+            document.file_path, file_path, "Tiedostopolku ei vastaa annettua."
+        )
+        self.assertEqual(
+            document.page_count, page_count, "Sivumäärä ei vastaa annettua."
+        )
+
+
+if __name__ == "__main__":
+    unittest.main()

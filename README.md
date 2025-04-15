@@ -59,3 +59,7 @@ Suorita `pylint`-tarkistukset:
 ```bash
 poetry run invoke lint
 ```
+
+## Releaset
+
+- [Viikko 5](https://github.com/gabrot/ot-harjoitustyo/releases/tag/viikko5)

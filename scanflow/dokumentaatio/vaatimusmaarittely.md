@@ -12,11 +12,11 @@ Sovelluksessa on vain yhdenlaisia käyttäjiä, joten erillisiä käyttäjärool
 
 ### Perusversio
 
-- Käyttäjä voi lisätä tiedoston sovellukseen joko drag-and-drop -toimintoa tai valitsemalla tiedoston tietokoneeltaan.
-- Sovellus tarkistaa tiedoston kelvollisuuden.
-- Ladatun tiedoston nimi ja perustiedot näytetään käyttöliittymässä.
-- Käyttäjä voi valita ladatun tiedoston ja jakaa sen useiksi pienemmiksi tiedostoiksi määriteltyjen sivuvälien perusteella.
-- Käyttäjä voi tallentaa jaetut tiedostot takaisin tietokoneelleen.
+- Käyttäjä voi lisätä tiedoston sovellukseen joko drag-and-drop -toimintoa tai valitsemalla tiedoston tietokoneeltaan. - ✅ **Tehty**
+- Sovellus tarkistaa tiedoston kelvollisuuden. ✅ **Tehty**
+- Ladatun tiedoston nimi ja perustiedot näytetään käyttöliittymässä. ✅ **Tehty**
+- Käyttäjä voi valita ladatun tiedoston ja jakaa sen useiksi pienemmiksi tiedostoiksi määriteltyjen sivuvälien perusteella. ✅ **Tehty**
+- Käyttäjä voi tallentaa jaetut tiedostot takaisin tietokoneelleen. ✅ **Tehty**
 
 ### Jatkokehitysideat
 

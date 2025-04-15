@@ -1,22 +1,24 @@
-import tkinter as tk
-from tkinter import ttk
+"""Sovelluksen päämoduuli ja käynnistyspiste.
 
-from ui.app import PdfSplitterApp
-from ui.theme import setup_styles
+Tämä moduuli alustaa ja käynnistää ScanFlow-sovelluksen graafisen
+käyttöliittymän käyttäen PyQt6-kirjastoa.
+"""
+
+import sys
+from PyQt6 import QtWidgets
+from src.ui.app import MainWindow
 
 
 def main():
-    """Sovelluksen käynnistysfunktio"""
-    root = tk.Tk()
-    root.title("Scanflow PDF Splitter")
-    
-    style = ttk.Style()
-    style.theme_use('default')
-    setup_styles(style)
-    
-    app = PdfSplitterApp(root)
-    
-    root.mainloop()
+    """Sovelluksen pääfunktio.
+
+    Luo QApplication-instanssin ja MainWindow-pääikkunan, näyttää ikkunan
+    ja käynnistää sovelluksen tapahtumasilmukan.
+    """
+    app = QtWidgets.QApplication(sys.argv)
+    window = MainWindow()
+    window.show()
+    sys.exit(app.exec())
 
 
 if __name__ == "__main__":

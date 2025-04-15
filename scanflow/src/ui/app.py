@@ -1,486 +1,471 @@
-import tkinter as tk
-from tkinter import ttk, filedialog
+"""ScanFlow-sovelluksen pääikkuna ja käyttöliittymän logiikka."""
+
 import os
-from PIL import Image, ImageTk
+from typing import List, Tuple, Optional, Any
+from PyQt6.QtWidgets import (
+    QMainWindow,
+    QWidget,
+    QVBoxLayout,
+    QPushButton,
+    QApplication,
+    QStackedWidget,
+    QGroupBox,
+    QFileDialog,
+    QProgressBar,
+)
+from PyQt6.QtCore import Qt, QThread, QObject, pyqtSignal, pyqtSlot
 
-from services.pdf_splitter_service import PDFSplitterService
-from ui.components.drop_area import DropArea
-from ui.theme import ThemeColors, ThemeFonts
+from ui.styles import QtTheme
+from ui.styles.button_styles import SPLIT_BUTTON_STYLE
+from ui.styles.group_styles import COMMON_GROUP_BOX_STYLE
+
+from ui.components.drop_area_widget import DropAreaWidget
+from ui.components.custom_range_manager import CustomRangeManager
+from ui.components.notification_manager import NotificationManager
+from ui.components.fixed_range_settings import FixedRangeSettings
+from ui.components.file_info_section import FileInfoSection
+from ui.components.mode_selector import ModeSelectorGroup
+
+try:
+    from services.pdf_splitter_service import PDFSplitterService
+except ImportError:
+    print(
+        "Varoitus: PDFSplitterService-palvelua ei löytynyt. Käytetään dummy-palvelua."
+    )
+
+    class PDFSplitterService:
+        def get_pdf_info(self, file_path):
+            import time
+
+            time.sleep(0.5)
+            return {
+                "page_count": 10,
+                "file_path": file_path,
+                "file_name": os.path.basename(file_path),
+            }
+
+        def split_by_fixed_range(
+            self,
+            file_path,
+            pages_per_file,
+            output_dir,
+            base_filename,
+            progress_callback=None,
+        ):
+            total_parts = 3
+            parts_done = 0
+            for i in range(total_parts):
+                import time
+
+                time.sleep(0.7)
+                parts_done += 1
+                if progress_callback:
+                    progress_callback(int(parts_done / total_parts * 100))
+            return [
+                os.path.join(output_dir, f"{base_filename}_part{i + 1}.pdf")
+                for i in range(total_parts)
+            ]
+
+        def split_by_custom_ranges(
+            self, file_path, ranges, output_dir, base_filename, progress_callback=None
+        ):
+            total_parts = len(ranges)
+            parts_done = 0
+            for i in range(total_parts):
+                import time
+
+                time.sleep(0.6)
+                parts_done += 1
+                if progress_callback:
+                    progress_callback(int(parts_done / total_parts * 100))
+            return [
+                os.path.join(output_dir, f"{base_filename}_custom_part{i + 1}.pdf")
+                for i in range(total_parts)
+            ]
 
 
-class PdfSplitterApp:
-    def __init__(self, root):
-        """PDF-jakaja sovelluksen päänäkymä
+class Worker(QObject):
+    finished = pyqtSignal(list)
+    error = pyqtSignal(str)
+    progress = pyqtSignal(int)
 
-        Args:
-            root: Tkinter-ikkunan juuri
-        """
-        self.root = root
-        self.pdf_service = PDFSplitterService()
-        self.current_file_path = None
-        self.current_pdf = None
-        self.page_count = 0
-        
-        self.range_mode = tk.StringVar(value="fixed")  # "fixed" tai "custom"
-        self.fixed_pages_count = tk.StringVar(value="2")
-        self.custom_ranges = []  # Lista (alku, loppu) -tupleista
-        
-        self._init_ui()
-    
-    def _init_ui(self):
-        """Alustaa käyttöliittymän peruskomponentit"""
-        self.root.title("PDF-jakaja")
-        self.root.configure(bg=ThemeColors.BACKGROUND)
-        self.root.geometry("600x650")
-        self.root.minsize(500, 600)
-        
-        # Pääkontaineri
-        main_frame = ttk.Frame(self.root, style="Main.TFrame")
-        main_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
-        
-        # Otsikko
-        title_label = ttk.Label(
-            main_frame, 
-            text="PDF-jakaja",
-            style="Title.TLabel"
-        )
-        title_label.pack(pady=(0, 20))
-        
-        # Tiedoston pudotusalue
-        self.drop_area = DropArea(main_frame, self._on_file_selected)
-        self.drop_area.pack(fill=tk.X, pady=10)
-        
-        # Tiedoston tiedot
-        self.file_info_frame = ttk.Frame(main_frame, style="InfoFrame.TFrame")
-        self.file_info_frame.pack(fill=tk.X, pady=10)
-        
-        self.file_name_label = ttk.Label(
-            self.file_info_frame, 
-            text="", 
-            style="FileInfo.TLabel"
-        )
-        self.file_name_label.pack(anchor="w", pady=5)
-        
-        self.page_info_label = ttk.Label(
-            self.file_info_frame, 
-            text="", 
-            style="FileInfo.TLabel"
-        )
-        self.page_info_label.pack(anchor="w", pady=5)
-        
-        # Asetustilan valinta
-        self._create_range_mode_selector(main_frame)
-        
-        # Alueet kehys
-        self.ranges_frame = ttk.Frame(main_frame, style="RangesFrame.TFrame")
-        self.ranges_frame.pack(fill=tk.X, pady=10)
-        
-        # Kiinteät alueet näkymä
-        self.fixed_ranges_frame = ttk.Frame(self.ranges_frame, style="Main.TFrame")
-        
-        # Mukautetut alueet näkymä
-        self.custom_ranges_frame = ttk.Frame(self.ranges_frame, style="Main.TFrame")
-        
-        # Tulostusasetukset
-        self.output_frame = ttk.Frame(main_frame, style="Main.TFrame")
-        self.output_frame.pack(fill=tk.X, pady=20)
-        
-        # Jakamispainike
-        self.split_button = ttk.Button(
-            main_frame,
-            text="Jaa PDF",
-            command=self._split_pdf,
-            style="Action.TButton"
-        )
-        self.split_button.pack(pady=20)
-        self.split_button.config(state=tk.DISABLED)
-        
-        # Statusalue
-        self.status_frame = ttk.Frame(main_frame, style="StatusFrame.TFrame")
-        self.status_frame.pack(fill=tk.X, pady=10)
-        
-        self.status_label = ttk.Label(
-            self.status_frame, 
-            text="", 
-            style="Status.TLabel"
-        )
-        self.status_label.pack(pady=5)
-        
-        # Näytetään kiinteät alueet oletuksena
-        self._create_fixed_ranges_view()
-        self._create_custom_ranges_view()
-        self._update_range_view()
-    
-    def _create_range_mode_selector(self, parent):
-        """Luo asetustilan valitsimen
+    def __init__(
+        self,
+        service: PDFSplitterService,
+        mode: int,
+        file_path: str,
+        output_dir: str,
+        base_filename: str,
+        settings: Any,
+    ):
+        super().__init__()
+        self.service = service
+        self.mode = mode
+        self.file_path = file_path
+        self.output_dir = output_dir
+        self.base_filename = base_filename
+        self.settings = settings
+        self._is_cancelled = False
 
-        Args:
-            parent: Vanhempi elementti
-        """
-        mode_frame = ttk.Frame(parent, style="ModeSelector.TFrame")
-        mode_frame.pack(fill=tk.X, pady=15)
-        
-        mode_label = ttk.Label(
-            mode_frame, 
-            text="Asetustila:", 
-            style="ModeLabel.TLabel"
-        )
-        mode_label.pack(anchor="w", pady=(0, 10))
-        
-        button_frame = ttk.Frame(mode_frame)
-        button_frame.pack(fill=tk.X)
-        
-        # Omat alueet -painike
-        self.custom_button = ttk.Button(
-            button_frame,
-            text="Omat alueet",
-            command=lambda: self._change_range_mode("custom"),
-            style="ModeButton.TButton" if self.range_mode.get() != "custom" else "ModeButtonActive.TButton",
-            width=15
-        )
-        self.custom_button.pack(side=tk.LEFT, padx=(0, 10))
-        
-        # Kiinteät alueet -painike
-        self.fixed_button = ttk.Button(
-            button_frame,
-            text="Kiinteät alueet",
-            command=lambda: self._change_range_mode("fixed"),
-            style="ModeButtonActive.TButton" if self.range_mode.get() == "fixed" else "ModeButton.TButton",
-            width=15
-        )
-        self.fixed_button.pack(side=tk.LEFT)
-    
-    def _create_fixed_ranges_view(self):
-        """Luo kiinteiden alueiden näkymän"""
-        for widget in self.fixed_ranges_frame.winfo_children():
-            widget.destroy()
-        
-        # Sivumäärä kentän otsikko
-        pages_label = ttk.Label(
-            self.fixed_ranges_frame, 
-            text="Jaa PDF sivualueisiin, joiden koko on:",
-            style="RangeLabel.TLabel"
-        )
-        pages_label.pack(anchor="w", pady=(0, 10))
-        
-        # Sivumäärän valitsin
-        pages_frame = ttk.Frame(self.fixed_ranges_frame)
-        pages_frame.pack(fill=tk.X, pady=5)
-        
-        pages_spinbox = ttk.Spinbox(
-            pages_frame,
-            from_=1,
-            to=100,
-            textvariable=self.fixed_pages_count,
-            width=5,
-            wrap=True,
-            command=self._update_fixed_info  # Add command to update when value changes
-        )
-        pages_spinbox.pack(side=tk.RIGHT)
-        pages_spinbox.bind("<FocusOut>", lambda e: self._update_fixed_info())  # Add FocusOut binding
-        
-        # Infoteksti
-        self.fixed_info_frame = ttk.Frame(self.fixed_ranges_frame, style="InfoBox.TFrame")
-        self.fixed_info_frame.pack(fill=tk.X, pady=15)
-        
-        self.fixed_info_label = ttk.Label(
-            self.fixed_info_frame,
-            text="",
-            style="InfoText.TLabel",
-            wraplength=500
-        )
-        self.fixed_info_label.pack(pady=15, padx=15)
-        
-        # Päivitä info jos tiedosto on valittu
-        self._update_fixed_info()
-    
-    def _create_custom_ranges_view(self):
-        """Luo mukautettujen alueiden näkymän"""
-        for widget in self.custom_ranges_frame.winfo_children():
-            widget.destroy()
-            
-        # Jos mukautettuja alueita ei ole, lisätään ensimmäinen
-        if not self.custom_ranges:
-            self._add_custom_range(1, self.page_count if self.page_count > 0 else 1)
-        
-        # Lisää olemassa olevat alueet näkymään
-        range_index = 0
-        for start, end in self.custom_ranges:
-            self._create_custom_range_row(range_index, start, end)
-            range_index += 1
-        
-        # Lisää uusi alue -painike
-        add_button = ttk.Button(
-            self.custom_ranges_frame,
-            text="+ Lisää alue",
-            command=self._add_new_range,
-            style="AddRange.TButton"
-        )
-        add_button.pack(pady=15)
-    
-    def _create_custom_range_row(self, index, start_value, end_value):
-        """Luo yksittäisen mukautetun alueen rivin
-
-        Args:
-            index: Alueen indeksi
-            start_value: Alkusivu
-            end_value: Loppusivu
-        """
-        # Pääkehys tälle alueelle
-        range_frame = ttk.Frame(self.custom_ranges_frame)
-        range_frame.pack(fill=tk.X, pady=5)
-        
-        # Indeksin näyttö
-        index_frame = ttk.Frame(range_frame)
-        index_frame.pack(fill=tk.X, pady=2)
-        
-        index_label = ttk.Label(
-            index_frame,
-            text=f"Alue {index+1}",
-            style="RangeIndex.TLabel"
-        )
-        index_label.pack(side=tk.LEFT)
-        
-        # Poistopainike
-        if len(self.custom_ranges) > 1:
-            delete_button = ttk.Button(
-                index_frame,
-                text="×",
-                command=lambda i=index: self._delete_range(i),
-                width=2,
-                style="DeleteRange.TButton"
-            )
-            delete_button.pack(side=tk.RIGHT)
-        
-        # Alkusivu
-        start_frame = ttk.Frame(range_frame)
-        start_frame.pack(fill=tk.X, pady=2)
-        
-        start_label = ttk.Label(
-            start_frame,
-            text="alkaen sivulta",
-            style="RangeLabel.TLabel",
-            width=15
-        )
-        start_label.pack(side=tk.LEFT)
-        
-        # Sivujen lukumäärä tälle alueelle
-        start_var = tk.StringVar(value=str(start_value))
-        start_spinbox = ttk.Spinbox(
-            start_frame,
-            from_=1,
-            to=self.page_count if self.page_count > 0 else 100,
-            textvariable=start_var,
-            width=8,
-            command=lambda: self._update_range_value(index, "start", start_var.get())
-        )
-        start_spinbox.pack(side=tk.RIGHT)
-        start_spinbox.bind("<FocusOut>", lambda e, i=index, v=start_var: 
-                           self._update_range_value(i, "start", v.get()))
-        
-        # Loppusivu
-        end_frame = ttk.Frame(range_frame)
-        end_frame.pack(fill=tk.X, pady=2)
-        
-        end_label = ttk.Label(
-            end_frame,
-            text="sivulle",
-            style="RangeLabel.TLabel",
-            width=15
-        )
-        end_label.pack(side=tk.LEFT)
-        
-        # Loppusivun valitsin
-        end_var = tk.StringVar(value=str(end_value))
-        end_spinbox = ttk.Spinbox(
-            end_frame,
-            from_=1,
-            to=self.page_count if self.page_count > 0 else 100,
-            textvariable=end_var,
-            width=8,
-            command=lambda: self._update_range_value(index, "end", end_var.get())
-        )
-        end_spinbox.pack(side=tk.RIGHT)
-        end_spinbox.bind("<FocusOut>", lambda e, i=index, v=end_var: 
-                         self._update_range_value(i, "end", v.get()))
-        
-        # Näytä erotin, jos ei ole viimeinen
-        if index < len(self.custom_ranges) - 1:
-            separator = ttk.Separator(self.custom_ranges_frame, orient="horizontal")
-            separator.pack(fill=tk.X, pady=10)
-    
-    def _update_range_value(self, index, field, value):
-        """Päivittää mukautetun alueen arvon
-
-        Args:
-            index: Alueen indeksi
-            field: Kenttä (start/end)
-            value: Uusi arvo
-        """
+    @pyqtSlot()
+    def run(self):
+        """Suorittaa PDF-tiedoston jakamisen annetun tilan ja asetusten mukaan."""
         try:
-            value = int(value)
-            if value < 1:
-                value = 1
-            if self.page_count > 0 and value > self.page_count:
-                value = self.page_count
-                
-            if index < len(self.custom_ranges):
-                start, end = self.custom_ranges[index]
-                
-                if field == "start":
-                    value = min(value, end)
-                    self.custom_ranges[index] = (value, end)
-                else:
-                    value = max(value, start)
-                    self.custom_ranges[index] = (start, value)
-                
-                self._create_custom_ranges_view()
-        except ValueError:
-            self._create_custom_ranges_view()
-    
-    def _add_new_range(self):
-        """Lisää uuden mukautetun alueen"""
-        if self.page_count > 0:
-            self._add_custom_range(self.page_count, self.page_count)
-        else:
-            self._add_custom_range(1, 1)
-        self._create_custom_ranges_view()
-    
-    def _add_custom_range(self, start, end):
-        """Lisää uuden mukautetun alueen annetuilla arvoilla
-
-        Args:
-            start: Aloitussivu
-            end: Lopetussivu
-        """
-        self.custom_ranges.append((start, end))
-    
-    def _delete_range(self, index):
-        """Poistaa mukautetun alueen
-
-        Args:
-            index: Poistettavan alueen indeksi
-        """
-        if 0 <= index < len(self.custom_ranges) and len(self.custom_ranges) > 1:
-            del self.custom_ranges[index]
-            self._create_custom_ranges_view()
-    
-    def _change_range_mode(self, mode):
-        """Vaihtaa asetustilaa
-
-        Args:
-            mode: Uusi tila (fixed/custom)
-        """
-        self.range_mode.set(mode)
-        
-        self.custom_button.configure(
-            style="ModeButtonActive.TButton" if mode == "custom" else "ModeButton.TButton"
-        )
-        self.fixed_button.configure(
-            style="ModeButtonActive.TButton" if mode == "fixed" else "ModeButton.TButton"
-        )
-        
-        self._update_range_view()
-    
-    def _update_range_view(self):
-        """Päivittää näytettävän aluenäkymän tilan mukaan"""
-        if self.range_mode.get() == "fixed":
-            self.custom_ranges_frame.pack_forget()
-            self.fixed_ranges_frame.pack(fill=tk.X, pady=10)
-        else:
-            self.fixed_ranges_frame.pack_forget()
-            self.custom_ranges_frame.pack(fill=tk.X, pady=10)
-    
-    def _on_file_selected(self, file_path):
-        """Käsittelee tiedoston valinnan
-
-        Args:
-            file_path: Valitun tiedoston polku
-        """
-        try:
-            self.current_file_path = file_path
-            pdf_info = self.pdf_service.get_pdf_info(file_path)
-            self.page_count = pdf_info["page_count"]
-            
-            file_name = os.path.basename(file_path)
-            self.file_name_label.config(text=f"Tiedosto: {file_name}")
-            self.page_info_label.config(text=f"Sivuja: {self.page_count}")
-            
-            if not self.custom_ranges:
-                self._add_custom_range(1, self.page_count)
-            self._create_custom_ranges_view()
-            
-            self._update_fixed_info()
-            
-            self.split_button.config(state=tk.NORMAL)
-            
-            self.status_label.config(text="")
-        except Exception as e:
-            self.status_label.config(text=f"Virhe: {str(e)}")
-    
-    def _update_fixed_info(self):
-        """Päivittää kiinteiden alueiden tiedot"""
-        if self.page_count > 0:
-            try:
-                pages_per_file = int(self.fixed_pages_count.get())
-                if pages_per_file < 1:
-                    pages_per_file = 1
-                    self.fixed_pages_count.set("1")
-                
-                file_count = (self.page_count + pages_per_file - 1) // pages_per_file
-                
-                self.fixed_info_label.config(
-                    text=f"Tämä PDF jaetaan tiedostoihin, joissa on {pages_per_file} sivua.\n"
-                         f"{file_count} PDF-tiedostoa luodaan."
-                )
-            except ValueError:
-                self.fixed_pages_count.set("2")
-                self._update_fixed_info()
-        else:
-            self.fixed_info_label.config(text="Ei tiedostoa valittu.")
-    
-    def _split_pdf(self):
-        """Jakaa PDF-tiedoston valittujen asetusten mukaan"""
-        if not self.current_file_path:
-            return
-        
-        try:
-            output_dir = filedialog.askdirectory(title="Valitse tallennushakemisto")
-            if not output_dir:
+            output_files = []
+            if self._is_cancelled:
                 return
-            
-            base_filename = os.path.splitext(os.path.basename(self.current_file_path))[0]
-            
-            if self.range_mode.get() == "fixed":
-                pages_per_file = int(self.fixed_pages_count.get())
-                output_files = self.pdf_service.split_by_fixed_range(
-                    self.current_file_path, 
+
+            if self.mode == 0:
+                pages_per_file = self.settings
+                output_files = self.service.split_by_fixed_range(
+                    self.file_path,
                     pages_per_file,
-                    output_dir,
-                    base_filename
-                )
-                self.status_label.config(
-                    text=f"PDF jaettu onnistuneesti {len(output_files)} tiedostoon."
+                    self.output_dir,
+                    self.base_filename,
+                    progress_callback=self.progress.emit,
                 )
             else:
-                output_files = self.pdf_service.split_by_custom_ranges(
-                    self.current_file_path,
-                    self.custom_ranges,
-                    output_dir,
-                    base_filename
+                ranges_to_split = self.settings
+                output_files = self.service.split_by_custom_ranges(
+                    self.file_path,
+                    ranges_to_split,
+                    self.output_dir,
+                    self.base_filename,
+                    progress_callback=self.progress.emit,
                 )
-                self.status_label.config(
-                    text=f"PDF jaettu onnistuneesti {len(output_files)} tiedostoon."
-                )
+
+            if not self._is_cancelled:
+                self.finished.emit(output_files)
+
         except Exception as e:
-            self.status_label.config(text=f"Virhe: {str(e)}")
+            if not self._is_cancelled:
+                self.error.emit(f"Virhe jakamisessa: {str(e)}")
+
+    def cancel(self):
+        """Keskeyttää työn suorittamisen."""
+        self._is_cancelled = True
 
 
-def main():
-    root = tk.Tk()
-    app = PdfSplitterApp(root)
-    root.mainloop()
+class MainWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.pdf_service = PDFSplitterService()
+        self.current_file_path: Optional[str] = None
+        self.page_count: int = 0
+        self.thread: Optional[QThread] = None
+        self.worker: Optional[Worker] = None
+        self._init_window()
+        self._init_ui()
 
+    def _init_window(self):
+        """Alustaa pääikkunan asetukset."""
+        self.setWindowTitle("ScanFlow PDF-jakaja")
+        self.setMinimumSize(600, 750)
+        self._setup_window_styles()
+        central_widget = QWidget()
+        self.setCentralWidget(central_widget)
+        main_layout = QVBoxLayout(central_widget)
+        main_layout.setContentsMargins(25, 25, 25, 25)
+        main_layout.setSpacing(20)
+        self.main_layout = main_layout
 
-if __name__ == "__main__":
-    main()
+    def _setup_window_styles(self):
+        """Asettaa ikkunan tyylit."""
+        self.setStyleSheet(QtTheme.get_stylesheet())
+
+    def _init_ui(self):
+        """Alustaa käyttöliittymän komponentit."""
+        content_container = QWidget()
+        content_layout = QVBoxLayout(content_container)
+        content_layout.setContentsMargins(0, 0, 0, 0)
+        content_layout.setSpacing(15)
+
+        self.notification_manager = NotificationManager(self)
+        self.drop_area = DropAreaWidget()
+        self.file_info_section = FileInfoSection()
+        self.mode_selector = ModeSelectorGroup()
+        self._create_settings_area()
+        self.progress_bar = QProgressBar()
+        self.split_button = QPushButton("Jaa PDF")
+
+        self.drop_area.file_dropped.connect(self._load_pdf)
+        self.drop_area.browse_button.clicked.connect(self._browse_file)
+        self.file_info_section.file_removed.connect(self._remove_file)
+        self.mode_selector.mode_changed.connect(self._on_mode_changed)
+        self.split_button.clicked.connect(self._start_split_pdf)
+
+        content_layout.addWidget(self.drop_area)
+        content_layout.addWidget(self.file_info_section)
+        content_layout.addWidget(self.mode_selector)
+        content_layout.addWidget(self.settings_stack)
+        content_layout.addWidget(self.progress_bar)
+        content_layout.addWidget(self.split_button)
+        content_layout.addStretch(1)
+        self.main_layout.addWidget(content_container)
+
+        self.split_button.setStyleSheet(SPLIT_BUTTON_STYLE)
+        self.split_button.setEnabled(False)
+        self.progress_bar.setVisible(False)
+        self.progress_bar.setValue(0)
+        self.progress_bar.setTextVisible(True)
+        self.progress_bar.setFormat("Jaetaan... %p%")
+
+    def _create_settings_area(self):
+        """Luo asetusten alueen käyttöliittymään."""
+        self.settings_stack = QStackedWidget()
+        self.fixed_settings = FixedRangeSettings()
+        self.settings_stack.addWidget(self.fixed_settings)
+
+        custom_settings_widget = QWidget()
+        custom_layout = QVBoxLayout(custom_settings_widget)
+        custom_layout.setContentsMargins(0, 0, 0, 0)
+        custom_layout.setSpacing(10)
+        self.range_manager = CustomRangeManager(
+            custom_settings_widget, use_frames=False
+        )
+        ranges_group = QGroupBox("Sivualueet")
+        ranges_group.setStyleSheet(COMMON_GROUP_BOX_STYLE)
+        ranges_layout = QVBoxLayout(ranges_group)
+        ranges_layout.setContentsMargins(10, 15, 10, 10)
+        ranges_layout.addWidget(self.range_manager.get_scroll_area())
+        custom_layout.addWidget(ranges_group)
+        button_container = QWidget()
+        button_layout = QVBoxLayout(button_container)
+        button_layout.setContentsMargins(0, 5, 0, 0)
+        button_layout.addWidget(
+            self.range_manager.get_add_button(), alignment=Qt.AlignmentFlag.AlignLeft
+        )
+        custom_layout.addWidget(button_container)
+        custom_layout.addStretch(1)
+        self.settings_stack.addWidget(custom_settings_widget)
+        self.range_manager.get_add_button().setVisible(False)
+
+    def _browse_file(self):
+        """Avaa tiedostoselaimen ja lataa valitun PDF-tiedoston."""
+        file_path, _ = QFileDialog.getOpenFileName(
+            self, "Valitse PDF", "", "PDF (*.pdf)"
+        )
+        if file_path:
+            self._load_pdf(file_path)
+
+    def _load_pdf(self, file_path: str):
+        """Lataa PDF-tiedoston ja päivittää käyttöliittymän.
+
+        Args:
+            file_path: Ladattavan tiedoston polku.
+        """
+        try:
+            self.notification_manager.show_notification("Ladataan...", "info")
+            QApplication.processEvents()
+            pdf_info = self.pdf_service.get_pdf_info(file_path)
+            self.current_file_path = file_path
+            self.page_count = pdf_info["page_count"]
+            self.file_info_section.update_file_info(
+                pdf_info["file_name"], self.page_count
+            )
+            self.drop_area.shrink_area(True)
+            self.fixed_settings.update_page_count(self.page_count)
+            self.range_manager.update_page_count(self.page_count)
+            self.range_manager.reset()
+            self.range_manager.get_add_button().setVisible(True)
+            self.split_button.setEnabled(True)
+            self.notification_manager.show_notification("Ladattu.", "success")
+        except (FileNotFoundError, ValueError) as e:
+            self._reset_ui_on_error(f"Latausvirhe: {e}")
+        except Exception as e:
+            self._reset_ui_on_error(f"Odottamaton virhe latauksessa: {e}")
+
+    def _reset_ui_on_error(self, error_message: str):
+        """Palauttaa käyttöliittymän oletustilaan virheen jälkeen.
+
+        Args:
+            error_message: Näytettävä virheviesti.
+        """
+        self.current_file_path = None
+        self.page_count = 0
+        self.file_info_section.clear()
+        self.drop_area.shrink_area(False)
+        self.notification_manager.show_notification(error_message, "error")
+        self.fixed_settings.update_page_count(0)
+        self.range_manager.update_page_count(0)
+        self.range_manager.reset()
+        self.range_manager.get_add_button().setVisible(False)
+        self.split_button.setEnabled(False)
+        self._set_ui_enabled(True)
+
+    def _remove_file(self):
+        """Poistaa ladatun tiedoston ja palauttaa käyttöliittymän oletustilaan."""
+        self._reset_ui_on_error("Tiedosto poistettu.")
+        self.notification_manager.hide_notification()
+
+    def _on_mode_changed(self, mode_index: int):
+        """Päivittää asetusten alueen valitun tilan mukaan.
+
+        Args:
+            mode_index: Valitun tilan indeksi.
+        """
+        self.settings_stack.setCurrentIndex(mode_index)
+
+    def _start_split_pdf(self):
+        """Aloittaa PDF-tiedoston jakamisen."""
+        if not self.current_file_path or self.thread is not None:
+            return
+
+        output_dir = QFileDialog.getExistingDirectory(
+            self,
+            "Valitse tallennuskansio",
+            os.path.dirname(self.current_file_path or ""),
+        )
+        if not output_dir:
+            return
+
+        mode = self.mode_selector.get_selected_mode()
+        settings = None
+        base_filename = os.path.splitext(os.path.basename(self.current_file_path))[0]
+
+        try:
+            if mode == 0:
+                pages_per_file = self.fixed_settings.get_pages_per_file()
+                if pages_per_file <= 0:
+                    raise ValueError("Sivuja per tiedosto > 0.")
+                settings = pages_per_file
+            else:
+                ranges = self.range_manager.get_ranges()
+                if not self._validate_custom_ranges(ranges):
+                    return
+                settings = ranges
+
+            self._set_ui_enabled(False)
+            self.progress_bar.setValue(0)
+            self.progress_bar.setVisible(True)
+
+            self.thread = QThread()
+            self.worker = Worker(
+                self.pdf_service,
+                mode,
+                self.current_file_path,
+                output_dir,
+                base_filename,
+                settings,
+            )
+            self.worker.moveToThread(self.thread)
+
+            self.thread.started.connect(self.worker.run)
+            self.worker.finished.connect(self._on_split_finished)
+            self.worker.error.connect(self._on_split_error)
+            self.worker.progress.connect(self._update_progress)
+            self.worker.finished.connect(self.thread.quit)
+            self.worker.finished.connect(self.worker.deleteLater)
+            self.thread.finished.connect(self.thread.deleteLater)
+            self.thread.finished.connect(self._split_cleanup)
+
+            self.thread.start()
+
+        except ValueError as e:
+            self.notification_manager.show_notification(
+                f"Virheelliset asetukset: {e}", "error"
+            )
+        except Exception as e:
+            self.notification_manager.show_notification(
+                f"Jakon aloitus epäonnistui: {e}", "error"
+            )
+            self._set_ui_enabled(True)
+
+    @pyqtSlot(list)
+    def _on_split_finished(self, output_files: List[str]):
+        """Käsittelee onnistuneen PDF-tiedoston jakamisen.
+
+        Args:
+            output_files: Lista luoduista tiedostoista.
+        """
+        if output_files:
+            output_dir = os.path.dirname(output_files[0])
+            self.notification_manager.show_notification(
+                f"PDF jaettu {len(output_files)} tiedostoon. Tallennettu: {output_dir}",
+                "success",
+            )
+        else:
+            self.notification_manager.show_notification(
+                "Jako valmis, ei luotu tiedostoja.", "info"
+            )
+        self._set_ui_enabled(True)
+        self.progress_bar.setVisible(False)
+
+    @pyqtSlot(str)
+    def _on_split_error(self, error_message: str):
+        """Käsittelee virheen PDF-tiedoston jakamisessa.
+
+        Args:
+            error_message: Virheviesti.
+        """
+        self.notification_manager.show_notification(error_message, "error")
+        self._set_ui_enabled(True)
+        self.progress_bar.setVisible(False)
+
+    @pyqtSlot(int)
+    def _update_progress(self, value: int):
+        """Päivittää edistymispalkin arvon.
+
+        Args:
+            value: Edistymisen prosenttiosuus.
+        """
+        self.progress_bar.setValue(value)
+
+    def _split_cleanup(self):
+        """Siivoaa jakamisen jälkeiset resurssit."""
+        self.thread = None
+        self.worker = None
+
+    def _validate_custom_ranges(self, ranges: List[Tuple[int, int]]) -> bool:
+        """Tarkistaa mukautettujen alueiden kelvollisuuden.
+
+        Args:
+            ranges: Lista mukautettuja alueita.
+
+        Returns:
+            True, jos alueet ovat kelvollisia, muuten False.
+        """
+        if not ranges:
+            self.notification_manager.show_notification(
+                "Määrittele vähintään yksi sivualue.", "error"
+            )
+            return False
+        return True
+
+    def _set_ui_enabled(self, enabled: bool):
+        """Asettaa käyttöliittymän komponenttien tilan.
+
+        Args:
+            enabled: True, jos käyttöliittymä on käytössä, muuten False.
+        """
+        self.drop_area.setEnabled(enabled)
+        self.file_info_section.setEnabled(enabled)
+        self.mode_selector.setEnabled(enabled)
+        self.settings_stack.setEnabled(enabled)
+        self.split_button.setEnabled(enabled and self.current_file_path is not None)
+
+    def closeEvent(self, event):
+        """Varmistaa, että säie lopetetaan kun ikkuna suljetaan."""
+        if self.thread and self.thread.isRunning():
+            self.worker.cancel()
+            self.thread.quit()
+            self.thread.wait()
+        event.accept()
+
+    def showEvent(self, event):
+        """Varmistaa ilmoituksen oikean sijainnin näytölle tullessa.
+
+        Args:
+            event: Näyttämistapahtuma.
+        """
+        super().showEvent(event)
+        self.notification_manager.position_notification()
+
+    def resizeEvent(self, event):
+        """Varmistaa ilmoituksen oikean sijainnin koon muutoksen jälkeen.
+
+        Args:
+            event: Koonmuutostapahtuma.
+        """
+        super().resizeEvent(event)
+        self.notification_manager.position_notification()

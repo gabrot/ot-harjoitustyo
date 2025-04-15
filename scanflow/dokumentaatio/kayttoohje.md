@@ -81,11 +81,3 @@ PDF-jakaja nimeää tulostiedostot automaattisesti alkuperäisen tiedoston nimen
 
 - **Omat alueet**: [alkuperäinen_nimi]_alue_[numero]_sivut_[alku]-[loppu].pdf
   Esim. "raportti_alue_1_sivut_1-3.pdf", "raportti_alue_2_sivut_5-7.pdf"
-
-## Virheilmoitukset
-
-Jos sovelluksen käytössä ilmenee ongelmia, tilakenttään tulee virheilmoitus.
-
-- **Tiedostoa ei voitu avata**: Tarkista, että tiedosto on PDF-muodossa ja että sinulla on lukuoikeudet tiedostoon.
-- **Tallennushakemistoa ei valittu**: Valitse hakemisto, johon sinulla on kirjoitusoikeudet.
-- **Virheellinen sivualue**: Tarkista, että sivunumerot ovat oikein ja sivualueet ovat mahdollisia.

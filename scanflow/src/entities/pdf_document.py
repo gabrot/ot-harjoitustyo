@@ -1,17 +1,27 @@
+"""Moduuli PDF-dokumenttien datamallille sovelluksessa.
+
+Tämä moduuli sisältää `PDFDocument`-luokan, joka edustaa yksinkertaista
+datarakennetta ladatulle PDF-tiedostolle.
+"""
+
+
 class PDFDocument:
-    """Luokka, joka kuvaa PDF-dokumenttia
-    
+    """Yksinkertainen luokka kuvaamaan ladattua PDF-dokumenttia.
+
+    Säilöö perustiedot PDF-tiedostosta, kuten sen tiedostopolun ja
+    kokonaissivumäärän.
+
     Attributes:
-        file_path: PDF-tiedoston polku
-        page_count: PDF-tiedoston sivujen määrä
+        file_path (str): PDF-tiedoston täydellinen polku levyltä.
+        page_count (int): PDF-tiedoston sivujen kokonaismäärä.
     """
-    
-    def __init__(self, file_path, page_count):
-        """Alustaa uuden PDF-dokumentin
-        
+
+    def __init__(self, file_path: str, page_count: int):
+        """Alustaa uuden PDFDocument-olion.
+
         Args:
-            file_path: Tiedoston polku
-            page_count: Sivujen määrä
+            file_path: Ladatun PDF-tiedoston polku.
+            page_count: Ladatun PDF-tiedoston sivumäärä.
         """
         self.file_path = file_path
         self.page_count = page_count

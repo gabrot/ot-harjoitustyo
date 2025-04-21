@@ -1,24 +1,27 @@
-"""Moduuli PDF-dokumenttien käsittelyyn matalan tason operaatioilla.
+"""
+Moduuli PDF-dokumenttien käsittelyyn matalan tason operaatioilla.
 
 Tarjoaa `PDFRepository`-luokan, joka kapseloi PDF-tiedostojen
 lataamisen, sivujen poimimisen, tallentamisen ja sulkemisen
-käyttäen PyMuPDF (fitz) -kirjastoa.
+käyttäen PyMuPDF -kirjastoa.
 """
 
 import os
-import fitz # PyMuPDF
 from typing import Dict, Any
+import fitz
 
 
 class PDFRepository:
-    """Repositorio PDF-dokumenttien käsittelyyn PyMuPDF-kirjaston avulla.
+    """
+    Repositorio PDF-dokumenttien käsittelyyn PyMuPDF-kirjaston avulla.
 
     Tarjoaa keskitetyn rajapinnan PDF-tiedostojen perusoperaatioille.
     Hoitaa virheenkäsittelyn liittyen tiedosto-operaatioihin.
     """
 
     def load_pdf(self, file_path: str) -> fitz.Document:
-        """Lataa PDF-dokumentin annetusta tiedostopolusta.
+        """
+        Lataa PDF-dokumentin annetusta tiedostopolusta.
 
         Args:
             file_path: Ladattavan PDF-tiedoston polku.
@@ -45,12 +48,12 @@ class PDFRepository:
         except Exception as e:
             if pdf_document and not pdf_document.is_closed:
                 pdf_document.close()
-            raise ValueError(
-                f"PDF-tiedoston ({os.path.basename(file_path)}) avaaminen epäonnistui: {e}"
-            ) from e
+            error_msg = f"PDF-tiedoston ({os.path.basename(file_path)}) avaaminen epäonnistui: {e}"
+            raise ValueError(error_msg) from None
 
     def get_page_count(self, pdf_document: fitz.Document) -> int:
-        """Palauttaa annetun PDF-dokumentin sivujen kokonaismäärän.
+        """
+        Palauttaa annetun PDF-dokumentin sivujen kokonaismäärän.
 
         Args:
             pdf_document: PyMuPDF-dokumenttiobjekti.
@@ -66,7 +69,8 @@ class PDFRepository:
         return pdf_document.page_count
 
     def get_metadata(self, pdf_document: fitz.Document) -> Dict[str, Any]:
-        """Palauttaa PDF-dokumentin metatiedot sanakirjana.
+        """
+        Palauttaa PDF-dokumentin metatiedot sanakirjana.
 
         Args:
             pdf_document: PyMuPDF-dokumenttiobjekti.
@@ -86,7 +90,8 @@ class PDFRepository:
     def extract_pages(
         self, pdf_document: fitz.Document, start_page: int, end_page: int
     ) -> fitz.Document:
-        """Poimii määritellyt sivut annetusta PDF-dokumentista uuteen dokumenttiin.
+        """
+        Poimii määritellyt sivut annetusta PDF-dokumentista uuteen dokumenttiin.
 
         Args:
             pdf_document: Alkuperäinen PyMuPDF-dokumentti.
@@ -151,20 +156,21 @@ class PDFRepository:
 
             pdf_document.save(output_path, garbage=4, deflate=True)
             return output_path
+        except IOError as e:
+            raise IOError(
+                f"Tiedoston kirjoitus epäonnistui polkuun '{output_path}': {e}"
+            ) from e
         except Exception as e:
-            raise Exception(
+            raise RuntimeError(
                 f"PDF-dokumentin tallennus polkuun '{output_path}' epäonnistui: {e}"
             ) from e
 
     def close_pdf(self, pdf_document: fitz.Document | None):
-        """Sulkee annetun PDF-dokumentin ja vapauttaa sen resurssit.
+        """
+        Sulkee annetun PDF-dokumentin ja vapauttaa sen resurssit.
 
         Args:
             pdf_document: Suljettava PyMuPDF-dokumentti tai None.
         """
-
         if pdf_document and not pdf_document.is_closed:
-            try:
-                pdf_document.close()
-            except Exception:
-                pass
+            pdf_document.close()

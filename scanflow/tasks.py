@@ -8,6 +8,7 @@ sovelluksen käynnistäminen, testien ajaminen ja koodin laadun tarkistaminen.
 
 from invoke import task
 
+
 @task
 def start(ctx):
     """Käynnistää sovelluksen paikallisesti.
@@ -19,6 +20,7 @@ def start(ctx):
     """
     ctx.run("python3 src/main.py", pty=True)
 
+
 @task
 def test(ctx):
     """Suorittaa sovelluksen yksikkötestit pytestillä.
@@ -27,6 +29,7 @@ def test(ctx):
         ctx: Invoke-kontekstiobjekti.
     """
     ctx.run("pytest src", pty=True)
+
 
 @task
 def coverage(ctx):
@@ -39,6 +42,7 @@ def coverage(ctx):
     """
     ctx.run("coverage run --branch -m pytest src", pty=True)
 
+
 @task(coverage)
 def coverage_report(ctx):
     """Luo HTML-muotoisen testikattavuusraportin.
@@ -49,6 +53,7 @@ def coverage_report(ctx):
         ctx: Invoke-kontekstiobjekti.
     """
     ctx.run("coverage html", pty=True)
+
 
 @task
 def lint(ctx):

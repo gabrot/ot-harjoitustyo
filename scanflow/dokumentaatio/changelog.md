@@ -1,4 +1,10 @@
 # Changelog
+## Viikko 6
+- Toteutettu käyttöliittymä parannuksia ja hienosäätöä
+- Lisätty mahdollisuus valita tiedostosijainti tiedoston lisäämisen jälkeen
+- Lisätty tuki pienemmille resoluutioille
+- Toteutettu automaattinen oletussijainti
+- Siivottu koodia ja päivitetty testejä
 
 ## Viikko 5
 - Uudistettu käyttöliittymä

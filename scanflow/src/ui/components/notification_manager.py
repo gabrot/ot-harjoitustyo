@@ -1,4 +1,5 @@
-"""Moduuli ilmoitusten näyttämiseen ScanFlow-sovelluksen käyttöliittymässä.
+"""
+Moduuli ilmoitusten näyttämiseen Scanflow-sovelluksen käyttöliittymässä.
 
 Tarjoaa `NotificationManager`-luokan, joka hallinnoi ilmoitusviestien
 näyttämistä ja piilottamista sovellusikkunan yläreunassa käyttäen animaatioita.
@@ -6,10 +7,12 @@ näyttämistä ja piilottamista sovellusikkunan yläreunassa käyttäen animaati
 
 from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QPushButton
 from PyQt6.QtCore import Qt, QTimer, QPropertyAnimation, QEasingCurve, QRect
+from ui.styles.dialog_styles import DialogStyles
 
 
 class NotificationManager:
-    """Hallinnoi ilmoitusviestien näyttämistä ja piilottamista sovellusikkunassa.
+    """
+    Hallinnoi ilmoitusviestien näyttämistä ja piilottamista sovellusikkunassa.
 
     Luo ja hallinnoi QFrame-pohjaista ilmoituspalkkia, joka voidaan näyttää
     eri tyypeillä (info, error, success) ja joka piilotetaan automaattisesti
@@ -23,7 +26,8 @@ class NotificationManager:
     """
 
     def __init__(self, parent_window):
-        """Alustaa ilmoitustenhallinnan.
+        """
+        Alustaa ilmoitustenhallinnan.
 
         Args:
             parent_window (QMainWindow): Ikkuna, johon ilmoituspalkki lisätään.
@@ -36,7 +40,8 @@ class NotificationManager:
         self.hide_timer.timeout.connect(self.hide_notification)
 
     def show_notification(self, message, notification_type="info", duration=5000):
-        """Näyttää ilmoitusviestin määritetyllä tyylillä ja kestolla.
+        """
+        Näyttää ilmoitusviestin määritetyllä tyylillä ja kestolla.
 
         Args:
             message (str): Näytettävä viesti.
@@ -77,29 +82,17 @@ class NotificationManager:
             alignment=Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter,
         )
 
-        bg_color, text_color, border_color, close_color = self._get_notification_colors(
-            notification_type
-        )
-        auto_hide_duration = 0 if notification_type == "error" else duration
-
-        self.notification_container.setStyleSheet(
-            f"""
-            QFrame#NotificationOverlay {{
-                background-color: {bg_color};
-                border: 1px solid {border_color};
-                border-radius: 5px;
-            }}
-        """
-        )
-        notification_label.setStyleSheet(
-            f"color: {text_color}; font-size: 14px; font-weight: 500; background: transparent; border: none;"
-        )
-        close_button.setStyleSheet(
-            f"""
-            QPushButton {{ background: transparent; border: none; color: {close_color}; font-weight: bold; font-size: 20px; padding: 0 0 2px 0; }}
-            QPushButton:hover {{ color: #000; }}
-        """
-        )
+        try:
+            DialogStyles.apply_notification_style(
+                self.notification_container,
+                notification_label,
+                close_button,
+                notification_type
+            )
+            auto_hide_duration = 0 if notification_type == "error" else duration
+        except Exception as e:
+            print(f"Virhe ilmoituksen tyylin soveltamisessa: {e}")
+            auto_hide_duration = duration
 
         self.position_notification()
 
@@ -119,23 +112,10 @@ class NotificationManager:
         if auto_hide_duration > 0:
             self.hide_timer.start(auto_hide_duration)
 
-    def _get_notification_colors(self, notification_type):
-        """Palauttaa värit ilmoitustyypin perusteella.
-
-        Args:
-            notification_type (str): 'info', 'error' tai 'success'.
-
-        Returns:
-            tuple: (bg_color, text_color, border_color, close_color)
-        """
-        if notification_type == "error":
-            return ("#f8d7da", "#721c24", "#f5c6cb", "#721c24")
-        elif notification_type == "success":
-            return ("#d4edda", "#155724", "#c3e6cb", "#155724")
-        else:
-            return ("#e2f3fd", "#004085", "#b8daff", "#004085")
-
     def hide_notification(self):
+        """
+        Piilottaa ilmoituksen häivytysanimaation avulla.
+        """
         self.hide_timer.stop()
         if (
             self.notification_container
@@ -162,6 +142,9 @@ class NotificationManager:
             self.notification_container.hide()
 
     def position_notification(self):
+        """
+        Sijoittaa ilmoituksen optimaaliseen kohtaan ikkunassa.
+        """
         if self.notification_container:
             max_width = 600
             side_margin = 20

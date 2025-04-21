@@ -9,14 +9,13 @@ packages = [
 
 [tool.poetry.dependencies]
 python = "^3.9"
-pillow = "^10.0.0"
 pymupdf = "^1.22.0"
 PyQt6 = "^6.6"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.3.1"
 coverage = "^7.2.7"
-pylint = "^2.17.4"
+pylint = ">=3.0"
 autopep8 = "^2.0.2"
 invoke = "^2.2.0"
 ruff = "^0.11.5"
@@ -24,3 +23,10 @@ ruff = "^0.11.5"
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+filterwarnings = [
+    "ignore:.*builtin type SwigPyPacked has no __module__ attribute.*:DeprecationWarning",
+    "ignore:.*builtin type SwigPyObject has no __module__ attribute.*:DeprecationWarning", 
+    "ignore:.*builtin type swigvarlink has no __module__ attribute.*:DeprecationWarning"
+]

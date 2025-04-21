@@ -1,4 +1,5 @@
-"""Moduuli ladatun PDF-tiedoston tietojen näyttämiseksi.
+"""
+Moduuli ladatun PDF-tiedoston tietojen näyttämiseksi.
 
 Tarjoaa `FileInfoSection`-komponentin, joka näyttää ladatun PDF:n
 nimen ja sivumäärän sekä painikkeen tiedoston poistamiseksi näkymästä.
@@ -13,10 +14,13 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 from PyQt6.QtCore import Qt, pyqtSignal
+from ui.styles.container_styles import ContainerStyles
+from ui.styles.button_styles import ButtonStyles
 
 
 class FileInfoSection(QFrame):
-    """Komponentti ladatun PDF-tiedoston perustietojen näyttämiseen.
+    """
+    Komponentti ladatun PDF-tiedoston perustietojen näyttämiseen.
 
     Näyttää tiedoston nimen ja sivumäärän. Sisältää myös painikkeen,
     jolla käyttäjä voi "poistaa" tiedoston sovelluksen näkymästä, mikä
@@ -30,15 +34,14 @@ class FileInfoSection(QFrame):
     file_removed = pyqtSignal()
 
     def __init__(self, parent=None):
-        """Alustaa tiedostotieto-osion.
+        """
+        Alustaa tiedostotieto-osion.
 
         Args:
             parent (QWidget, optional): Isäntäwidget. Oletus None.
         """
         super().__init__(parent)
-        self.setStyleSheet(
-            "QFrame { background-color: transparent; border: none; padding: 0px; margin: 0px; }"
-        )
+        ContainerStyles.apply_file_info_section_style(self)
         self._init_ui()
         self.setVisible(False)
 
@@ -65,7 +68,7 @@ class FileInfoSection(QFrame):
         file_info_layout.addWidget(file_info_text_widget, stretch=1)
 
         remove_file_btn = QPushButton("×")
-        remove_file_btn.setObjectName("DeleteRangeButton")
+        ButtonStyles.apply_delete_button_style(remove_file_btn)
         remove_file_btn.setToolTip("Poista tiedosto näkymästä")
         remove_file_btn.setFixedSize(28, 28)
         remove_file_btn.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -77,11 +80,11 @@ class FileInfoSection(QFrame):
         self.remove_file_btn = remove_file_btn
 
     def _on_remove_clicked(self):
-        """Käsittelee poistopainikkeen klikkauksen lähettämällä signaalin."""
         self.file_removed.emit()
 
     def update_file_info(self, file_name, page_count):
-        """Päivittää näytettävät tiedostotiedot ja näyttää osion.
+        """
+        Päivittää näytettävät tiedostotiedot ja näyttää osion.
 
         Args:
             file_name (str): Näytettävän tiedoston nimi.
@@ -92,7 +95,15 @@ class FileInfoSection(QFrame):
         self.setVisible(True)
 
     def clear(self):
-        """Tyhjentää näytettävät tiedot ja piilottaa osion."""
         self.file_name_label.setText("Ei tiedostoa valittuna")
         self.page_count_label.setText("")
         self.setVisible(False)
+
+    def get_current_filename(self):
+        """
+        Palauttaa tällä hetkellä näytettävän tiedoston nimen.
+
+        Returns:
+            str: Tiedoston nimi, tai tyhjä merkkijono jos ei tiedostoa.
+        """
+        return self.file_name_label.text() if self.isVisible() else ""

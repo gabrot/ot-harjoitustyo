@@ -176,15 +176,15 @@ cython_debug/
 # MacOS
 .DS_Store
 
-# Python-virtuaaliympäristö
+# Python virtual environment
 .venv/
 venv/
 
-# Python cache-tiedostot
+# Python cache files
 __pycache__/
 *.pyc
 
-# Muut yleiset turhat tiedostot ja kansiot
+# Other files and folders
 *.log
 *.sqlite
 *.db

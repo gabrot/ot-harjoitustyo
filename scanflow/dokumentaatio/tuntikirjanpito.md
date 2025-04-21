@@ -25,4 +25,13 @@
 | 14.04.2025 | 4.0               | Koodin päivittäminen |
 | 15.04.2025 | 5.0               | Koodin testaus ja hienosäätö|
 | 15.04.2025 | 4.0               | Dokumentointi ja testaukset|
-| Yhteensä   | 89.5       
+| 17.04.2025 | 4.0               | Koodin tarkistus ja lisäominaisuuksien suunnittelu|
+| 18.04.2025 | 6.0               | Tiedostosijainnin valinnan toteutus|
+| 18.04.2025 | 2.0               | Dokumentaation päivittäminen|
+| 19.04.2025 | 8.0               | Koodin siivoaminen ja korjailu|
+| 20.04.2025 | 8.0               | Testailu ja virheiden korjaaminen|
+| 20.04.2025 | 2.0               | Ohjelman päivittäminen pienille resoluutioille     |
+| 21.04.2025 | 5.0               | Uusien ominaisuuksien testailu ja korjaukset|
+| 21.04.2025 | 1.0               | macOS ja Linux testaus |
+| 21.04.2025 | 2.5               | Dokumentaation viimeistely ja release  |    
+|Yhteensä   | 122       

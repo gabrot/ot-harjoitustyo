@@ -1,5 +1,11 @@
 # Vaatimusmäärittely
 
+## Yhteenveto
+
+- ✅ 13 / 13 perustoiminnallisuutta toteutettu
+- ❌ 0 / 4 jatkokehitystä toteutettu
+- ✅ 2 / 0 lisäominaisuuksia toteutettu
+
 ## Sovelluksen tarkoitus
 
 Sovelluksen tarkoituksena on tarjota käyttäjälle helppokäyttöinen työkalu PDF-tiedostojen käsittelyyn ja jakamiseen pienemmiksi tiedostoiksi. Käyttäjä voi ladata tiedostoja joko pudottamalla tiedoston käyttöliittymään tai valitsemalla tiedoston manuaalisesti tietokoneeltaan.
@@ -20,23 +26,27 @@ Sovelluksessa on vain yhdenlaisia käyttäjiä, joten erillisiä käyttäjärool
 
 ### Jatkokehitysideat
 
-- Mahdollisuus automaattisesti nimetä jaetut tiedostot käyttäjän määrittelemän mallin mukaisesti.
-- Jaettujen tiedostojen esikatselutoiminto ennen tallennusta.
-- Mahdollisuus hallita ladattujen tiedostojen historiaa.
-- OCR-toiminnallisuuden lisääminen ja hyödyntäminen automaatioissa.
+- Mahdollisuus automaattisesti nimetä jaetut tiedostot käyttäjän määrittelemän mallin mukaisesti. ❌ Ei toteutettu
+- Jaettujen tiedostojen esikatselutoiminto ennen tallennusta. ❌ Ei toteutettu
+- Mahdollisuus hallita ladattujen tiedostojen historiaa. ❌ Ei toteutettu
+- OCR-toiminnallisuuden lisääminen ja hyödyntäminen automaatioissa. ❌ Ei toteutettu
 
 ## Käyttöliittymäluonnos
 
 ### Päänäkymä
 
 - Yksinkertainen käyttöliittymä, jossa voidaan lisätä tiedosto joko:
-    - Drag-and-drop toiminallisuuden avulla
-  - "Valitse tiedosto" -painike
-- Kun tiedosto on ladattu, käyttöliittymä näyttää tiedoston perustiedot ja mahdollisuuden suorittaa tiedoston jakaminen.
-- Käyttöliittymä tarjoaa selkeän näkymän jaettujen tiedostojen tallentamiselle.
+- Drag-and-drop toiminallisuuden avulla ✅ **Tehty**
+- "Valitse tiedosto" -painike ✅ **Tehty**
+- Kun tiedosto on ladattu, käyttöliittymä näyttää tiedoston perustiedot ja mahdollisuuden suorittaa tiedoston jakaminen. ✅ **Tehty**
+- Käyttöliittymä tarjoaa selkeän näkymän jaettujen tiedostojen tallentamiselle. ✅ **Tehty**
 
 ### Tiedoston käsittelyn näkymä
 
-- Näyttää tiedoston esikatselun ja sivujen määrän.
-- Mahdollistaa sivuvälien määrittelyn jaettaville tiedostoille.
-- "Jaa tiedosto" -painike aloittaa jakamisen.
+- Näyttää tiedoston esikatselun ja sivujen määrän. ✅ **Tehty**
+- Mahdollistaa sivuvälien määrittelyn jaettaville tiedostoille. ✅ **Tehty**
+- "Jaa PDF" -painike aloittaa jakamisen. ✅ **Tehty**
+
+### Lisäominaisuudet mitä toteutettiin
+- Mahdollisuus määrittää tallennuspaikka ✅ **Tehty**
+- Mahdollisuus käyttää käyttöliittymää pienellä resoluutiolla ✅ **Tehty**

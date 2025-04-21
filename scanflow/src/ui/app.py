@@ -1,24 +1,30 @@
-"""ScanFlow-sovelluksen pääikkuna ja käyttöliittymän logiikka."""
+"""
+Scanflow-sovelluksen pääikkuna ja käyttöliittymän logiikka.
+
+Tämä moduuli sisältää sovelluksen päänäkymän (MainWindow) sekä
+Worker-luokan PDF-tiedostojen käsittelyä varten taustasäikeessä.
+"""
 
 import os
+import logging
 from typing import List, Tuple, Optional, Any
-from PyQt6.QtWidgets import (
+from PyQt6.QtWidgets import ( 
     QMainWindow,
     QWidget,
     QVBoxLayout,
+    QHBoxLayout,
     QPushButton,
     QApplication,
     QStackedWidget,
     QGroupBox,
     QFileDialog,
     QProgressBar,
-)
-from PyQt6.QtCore import Qt, QThread, QObject, pyqtSignal, pyqtSlot
-
-from ui.styles import QtTheme
-from ui.styles.button_styles import SPLIT_BUTTON_STYLE
-from ui.styles.group_styles import COMMON_GROUP_BOX_STYLE
-
+    QLineEdit,
+    QSizePolicy,
+    QScrollArea,
+) # pylint: disable=no-name-in-module
+from PyQt6.QtCore import Qt, QThread, QObject, pyqtSignal, pyqtSlot 
+from ui.styles import BaseStyles, ButtonStyles, ContainerStyles, DialogStyles, QtTheme
 from ui.components.drop_area_widget import DropAreaWidget
 from ui.components.custom_range_manager import CustomRangeManager
 from ui.components.notification_manager import NotificationManager
@@ -26,78 +32,46 @@ from ui.components.fixed_range_settings import FixedRangeSettings
 from ui.components.file_info_section import FileInfoSection
 from ui.components.mode_selector import ModeSelectorGroup
 
-try:
-    from services.pdf_splitter_service import PDFSplitterService
-except ImportError:
-    print(
-        "Varoitus: PDFSplitterService-palvelua ei löytynyt. Käytetään dummy-palvelua."
-    )
+log_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+log_file = os.path.join(log_dir, "scanflow.log")
 
-    class PDFSplitterService:
-        def get_pdf_info(self, file_path):
-            import time
+log_formatter_file = logging.Formatter(
+    "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+log_formatter_console = logging.Formatter("%(levelname)s: %(message)s")
 
-            time.sleep(0.5)
-            return {
-                "page_count": 10,
-                "file_path": file_path,
-                "file_name": os.path.basename(file_path),
-            }
+file_handler = logging.FileHandler(log_file, encoding="utf-8")
+file_handler.setLevel(logging.DEBUG)
+file_handler.setFormatter(log_formatter_file)
 
-        def split_by_fixed_range(
-            self,
-            file_path,
-            pages_per_file,
-            output_dir,
-            base_filename,
-            progress_callback=None,
-        ):
-            total_parts = 3
-            parts_done = 0
-            for i in range(total_parts):
-                import time
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.INFO)
+console_handler.setFormatter(log_formatter_console)
 
-                time.sleep(0.7)
-                parts_done += 1
-                if progress_callback:
-                    progress_callback(int(parts_done / total_parts * 100))
-            return [
-                os.path.join(output_dir, f"{base_filename}_part{i + 1}.pdf")
-                for i in range(total_parts)
-            ]
+root_logger = logging.getLogger()
+root_logger.setLevel(logging.DEBUG)
+root_logger.addHandler(file_handler)
+root_logger.addHandler(console_handler)
 
-        def split_by_custom_ranges(
-            self, file_path, ranges, output_dir, base_filename, progress_callback=None
-        ):
-            total_parts = len(ranges)
-            parts_done = 0
-            for i in range(total_parts):
-                import time
-
-                time.sleep(0.6)
-                parts_done += 1
-                if progress_callback:
-                    progress_callback(int(parts_done / total_parts * 100))
-            return [
-                os.path.join(output_dir, f"{base_filename}_custom_part{i + 1}.pdf")
-                for i in range(total_parts)
-            ]
-
+logger = logging.getLogger(__name__)
 
 class Worker(QObject):
+    """
+    Suorittaa PDF-tiedoston jakamisen taustasäikeessä.
+
+    Args:
+        service: PDF-käsittelypalvelu.
+        mode: Käyttötila (0 = kiinteä jako, 1 = mukautettu jako).
+        file_path: PDF-tiedoston polku.
+        output_dir: Tallennuskansion polku.
+        base_filename: Tiedostojen nimen perusosa.
+        settings: Jakamisasetukset.
+    """
     finished = pyqtSignal(list)
     error = pyqtSignal(str)
     progress = pyqtSignal(int)
 
-    def __init__(
-        self,
-        service: PDFSplitterService,
-        mode: int,
-        file_path: str,
-        output_dir: str,
-        base_filename: str,
-        settings: Any,
-    ):
+    def __init__(self, service, mode: int, file_path: str, output_dir: str, base_filename: str, settings: Any):
         super().__init__()
         self.service = service
         self.mode = mode
@@ -109,82 +83,156 @@ class Worker(QObject):
 
     @pyqtSlot()
     def run(self):
-        """Suorittaa PDF-tiedoston jakamisen annetun tilan ja asetusten mukaan."""
+        """
+        Suorittaa PDF-tiedoston jakamisen valitulla tilalla ja asetuksilla.
+        """
         try:
             output_files = []
             if self._is_cancelled:
                 return
-
             if self.mode == 0:
                 pages_per_file = self.settings
-                output_files = self.service.split_by_fixed_range(
-                    self.file_path,
-                    pages_per_file,
-                    self.output_dir,
-                    self.base_filename,
-                    progress_callback=self.progress.emit,
-                )
+                try:
+                    output_files = self.service.split_by_fixed_range(
+                        self.file_path,
+                        pages_per_file,
+                        self.output_dir,
+                        base_filename=self.base_filename,
+                        progress_callback=self.progress.emit,
+                    )
+                except FileNotFoundError:
+                    if not self._is_cancelled:
+                        self.error.emit(
+                            "Tiedostoa ei löydy. Tarkista että tiedosto on vielä saatavilla."
+                        )
+                    return
+                except ValueError as e:
+                    if not self._is_cancelled:
+                        self.error.emit(f"Jakaminen epäonnistui: {str(e)}")
+                    return
+                except IOError as e:
+                    if not self._is_cancelled:
+                        self.error.emit(
+                            f"Tiedoston käsittelyssä tapahtui virhe: {str(e)}"
+                        )
+                    return
+                except Exception as e:
+                    logger.error("Odottamaton virhe jakaessa PDF-tiedostoa: %s", str(e), exc_info=True)
+                    if not self._is_cancelled:
+                        self.error.emit(
+                            "Odottamaton virhe PDF-tiedoston jakamisessa. Tarkista loki lisätietoja varten."
+                        )
+                    return
             else:
                 ranges_to_split = self.settings
-                output_files = self.service.split_by_custom_ranges(
-                    self.file_path,
-                    ranges_to_split,
-                    self.output_dir,
-                    self.base_filename,
-                    progress_callback=self.progress.emit,
-                )
-
+                try:
+                    output_files = self.service.split_by_custom_ranges(
+                        self.file_path,
+                        ranges_to_split,
+                        self.output_dir,
+                        base_filename=self.base_filename,
+                        progress_callback=self.progress.emit,
+                    )
+                except FileNotFoundError:
+                    if not self._is_cancelled:
+                        self.error.emit(
+                            "Tiedostoa ei löydy. Tarkista että tiedosto on vielä saatavilla."
+                        )
+                    return
+                except ValueError as e:
+                    if not self._is_cancelled:
+                        self.error.emit(f"Jakaminen epäonnistui: {str(e)}")
+                    return
+                except IOError as e:
+                    if not self._is_cancelled:
+                        self.error.emit(
+                            f"Tiedoston käsittelyssä tapahtui virhe: {str(e)}"
+                        )
+                    return
+                except Exception as e:
+                    logger.error("Odottamaton virhe jakaessa PDF-tiedostoa: %s", str(e), exc_info=True)
+                    if not self._is_cancelled:
+                        self.error.emit(
+                            "Odottamaton virhe PDF-tiedoston jakamisessa. Tarkista loki lisätietoja varten."
+                        )
+                    return
             if not self._is_cancelled:
                 self.finished.emit(output_files)
-
         except Exception as e:
+            logger.error("Kriittinen virhe PDF:n jakamisessa Workerissa: %s", str(e), exc_info=True)
             if not self._is_cancelled:
-                self.error.emit(f"Virhe jakamisessa: {str(e)}")
+                self.error.emit(
+                    "Virhe PDF:n jakamisessa. Tarkista loki lisätietoja varten."
+                )
 
     def cancel(self):
-        """Keskeyttää työn suorittamisen."""
+        """
+        Keskeyttää työn suorittamisen.
+        """
         self._is_cancelled = True
 
-
 class MainWindow(QMainWindow):
-    def __init__(self):
+    """
+    Sovelluksen pääikkuna PDF-tiedostojen jakamiseen.
+
+    Args:
+        pdf_service: PDF-käsittelypalvelu.
+    """
+    def __init__(self, pdf_service):
         super().__init__()
-        self.pdf_service = PDFSplitterService()
+        self.pdf_service = pdf_service
         self.current_file_path: Optional[str] = None
         self.page_count: int = 0
         self.thread: Optional[QThread] = None
         self.worker: Optional[Worker] = None
+        self.last_save_directory: Optional[str] = None
         self._init_window()
         self._init_ui()
+        self._set_ui_enabled(False)
+        self._update_split_button_state()
 
     def _init_window(self):
-        """Alustaa pääikkunan asetukset."""
-        self.setWindowTitle("ScanFlow PDF-jakaja")
-        self.setMinimumSize(600, 750)
+        self.setWindowTitle("Scanflow - PDF-jakaja")
+        self.setMinimumSize(500, 500)
         self._setup_window_styles()
-        central_widget = QWidget()
-        self.setCentralWidget(central_widget)
-        main_layout = QVBoxLayout(central_widget)
+        
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setFrameShape(scroll_area.Shape.NoFrame)
+        
+        content_widget = QWidget()
+        main_layout = QVBoxLayout(content_widget)
         main_layout.setContentsMargins(25, 25, 25, 25)
-        main_layout.setSpacing(20)
+        main_layout.setSpacing(25)
+        
+        scroll_area.setWidget(content_widget)
+        self.setCentralWidget(scroll_area)
         self.main_layout = main_layout
+        self._adjust_initial_size()
+
+    def _adjust_initial_size(self):
+        screen = QApplication.primaryScreen().availableGeometry()
+        max_width = int(screen.width() * 0.8)
+        max_height = int(screen.height() * 0.9)
+        width = min(650, max_width)
+        height = min(860, max_height)
+        self.resize(width, height)
 
     def _setup_window_styles(self):
-        """Asettaa ikkunan tyylit."""
         self.setStyleSheet(QtTheme.get_stylesheet())
 
     def _init_ui(self):
-        """Alustaa käyttöliittymän komponentit."""
         content_container = QWidget()
         content_layout = QVBoxLayout(content_container)
         content_layout.setContentsMargins(0, 0, 0, 0)
-        content_layout.setSpacing(15)
+        content_layout.setSpacing(20)
 
         self.notification_manager = NotificationManager(self)
         self.drop_area = DropAreaWidget()
         self.file_info_section = FileInfoSection()
         self.mode_selector = ModeSelectorGroup()
         self._create_settings_area()
+        self._create_output_directory_area()
         self.progress_bar = QProgressBar()
         self.split_button = QPushButton("Jaa PDF")
 
@@ -198,12 +246,13 @@ class MainWindow(QMainWindow):
         content_layout.addWidget(self.file_info_section)
         content_layout.addWidget(self.mode_selector)
         content_layout.addWidget(self.settings_stack)
+        content_layout.addWidget(self.output_group)
         content_layout.addWidget(self.progress_bar)
         content_layout.addWidget(self.split_button)
         content_layout.addStretch(1)
         self.main_layout.addWidget(content_container)
 
-        self.split_button.setStyleSheet(SPLIT_BUTTON_STYLE)
+        ButtonStyles.apply_primary_style(self.split_button)
         self.split_button.setEnabled(False)
         self.progress_bar.setVisible(False)
         self.progress_bar.setValue(0)
@@ -211,7 +260,6 @@ class MainWindow(QMainWindow):
         self.progress_bar.setFormat("Jaetaan... %p%")
 
     def _create_settings_area(self):
-        """Luo asetusten alueen käyttöliittymään."""
         self.settings_stack = QStackedWidget()
         self.fixed_settings = FixedRangeSettings()
         self.settings_stack.addWidget(self.fixed_settings)
@@ -224,7 +272,8 @@ class MainWindow(QMainWindow):
             custom_settings_widget, use_frames=False
         )
         ranges_group = QGroupBox("Sivualueet")
-        ranges_group.setStyleSheet(COMMON_GROUP_BOX_STYLE)
+        ContainerStyles.apply_group_box_style(ranges_group)
+        ranges_group.setMinimumHeight(200)
         ranges_layout = QVBoxLayout(ranges_group)
         ranges_layout.setContentsMargins(10, 15, 10, 10)
         ranges_layout.addWidget(self.range_manager.get_scroll_area())
@@ -240,20 +289,57 @@ class MainWindow(QMainWindow):
         self.settings_stack.addWidget(custom_settings_widget)
         self.range_manager.get_add_button().setVisible(False)
 
+    def _create_output_directory_area(self):
+        self.output_group = QGroupBox("Tallennuskansio")
+        ContainerStyles.apply_group_box_style(self.output_group)
+        output_layout = QHBoxLayout(self.output_group)
+        output_layout.setContentsMargins(10, 10, 10, 10)
+        output_layout.setSpacing(10)
+
+        self.output_dir_line_edit = QLineEdit()
+        self.output_dir_line_edit.setPlaceholderText("Valitse tallennuskansio")
+        self.output_dir_line_edit.setReadOnly(True)
+        self.output_dir_line_edit.setSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed
+        )
+
+        self.browse_output_button = QPushButton("Selaa")
+        ButtonStyles.apply_browse_output_style(self.browse_output_button)
+        self.browse_output_button.clicked.connect(self._browse_output_directory)
+
+        output_layout.addWidget(self.output_dir_line_edit, 1)
+        output_layout.addWidget(self.browse_output_button, 0)
+
     def _browse_file(self):
-        """Avaa tiedostoselaimen ja lataa valitun PDF-tiedoston."""
         file_path, _ = QFileDialog.getOpenFileName(
             self, "Valitse PDF", "", "PDF (*.pdf)"
         )
         if file_path:
             self._load_pdf(file_path)
 
-    def _load_pdf(self, file_path: str):
-        """Lataa PDF-tiedoston ja päivittää käyttöliittymän.
+    def _browse_output_directory(self):
+        start_directory = self.last_save_directory or os.path.expanduser("~")
+        output_dir = QFileDialog.getExistingDirectory(
+            self,
+            "Valitse tallennuskansio",
+            start_directory,
+        )
+        if output_dir:
+            self.last_save_directory = output_dir
+            self.output_dir_line_edit.setText(output_dir)
+            self._update_split_button_state()
 
-        Args:
-            file_path: Ladattavan tiedoston polku.
-        """
+    def _update_split_button_state(self):
+        enabled = bool(self.current_file_path and self.last_save_directory)
+        self.split_button.setEnabled(enabled)
+
+    def _load_pdf(self, file_path: str):
+        if self.thread and self.thread.isRunning():
+            self.worker.cancel()
+            self.thread.quit()
+            self.thread.wait()
+        self.thread = None
+        self.worker = None
         try:
             self.notification_manager.show_notification("Ladataan...", "info")
             QApplication.processEvents()
@@ -263,24 +349,38 @@ class MainWindow(QMainWindow):
             self.file_info_section.update_file_info(
                 pdf_info["file_name"], self.page_count
             )
+            
             self.drop_area.shrink_area(True)
+            self.drop_area.browse_button.clicked.connect(self._browse_file)
+            
             self.fixed_settings.update_page_count(self.page_count)
             self.range_manager.update_page_count(self.page_count)
             self.range_manager.reset()
             self.range_manager.get_add_button().setVisible(True)
-            self.split_button.setEnabled(True)
-            self.notification_manager.show_notification("Ladattu.", "success")
-        except (FileNotFoundError, ValueError) as e:
-            self._reset_ui_on_error(f"Latausvirhe: {e}")
-        except Exception as e:
-            self._reset_ui_on_error(f"Odottamaton virhe latauksessa: {e}")
+
+            if self.current_file_path and not self.output_dir_line_edit.text():
+                default_output_dir = os.path.dirname(self.current_file_path)
+                self.last_save_directory = default_output_dir
+                self.output_dir_line_edit.setText(default_output_dir)
+                self._update_split_button_state()
+
+            self._set_ui_enabled(True)
+            self.notification_manager.show_notification("Tiedosto ladattu.", "success")
+        except FileNotFoundError:
+            logger.exception("Tiedostoa ei löydy")
+            self._reset_ui_on_error("Tiedostoa ei löydy. Tarkista tiedoston sijainti.")
+        except ValueError:
+            logger.exception("Virheellinen arvo PDF:n latauksessa")
+            self._reset_ui_on_error(
+                "PDF-tiedoston lataus epäonnistui. Tiedosto saattaa olla virheellinen."
+            )
+        except Exception:
+            logger.exception("Odottamaton virhe PDF:n latauksessa")
+            self._reset_ui_on_error(
+                "Odottamaton virhe PDF:n latauksessa. Tarkista loki lisätietoja varten."
+            )
 
     def _reset_ui_on_error(self, error_message: str):
-        """Palauttaa käyttöliittymän oletustilaan virheen jälkeen.
-
-        Args:
-            error_message: Näytettävä virheviesti.
-        """
         self.current_file_path = None
         self.page_count = 0
         self.file_info_section.clear()
@@ -290,33 +390,39 @@ class MainWindow(QMainWindow):
         self.range_manager.update_page_count(0)
         self.range_manager.reset()
         self.range_manager.get_add_button().setVisible(False)
-        self.split_button.setEnabled(False)
-        self._set_ui_enabled(True)
+        self._set_ui_enabled(False)
+
+        if self.thread and self.thread.isRunning():
+            self.worker.cancel()
+            self.thread.quit()
+            self.thread.wait()
+        self.thread = None
+        self.worker = None
 
     def _remove_file(self):
-        """Poistaa ladatun tiedoston ja palauttaa käyttöliittymän oletustilaan."""
         self._reset_ui_on_error("Tiedosto poistettu.")
         self.notification_manager.hide_notification()
+        self.output_dir_line_edit.clear()
+        self._update_split_button_state()
+        
+        try:
+            self.drop_area.browse_button.clicked.disconnect(self._browse_file)
+        except TypeError:
+            pass
+            
+        self.drop_area.browse_button.clicked.connect(self._browse_file)
 
     def _on_mode_changed(self, mode_index: int):
-        """Päivittää asetusten alueen valitun tilan mukaan.
-
-        Args:
-            mode_index: Valitun tilan indeksi.
-        """
         self.settings_stack.setCurrentIndex(mode_index)
 
     def _start_split_pdf(self):
-        """Aloittaa PDF-tiedoston jakamisen."""
-        if not self.current_file_path or self.thread is not None:
-            return
+        output_dir = self.output_dir_line_edit.text()
 
-        output_dir = QFileDialog.getExistingDirectory(
-            self,
-            "Valitse tallennuskansio",
-            os.path.dirname(self.current_file_path or ""),
-        )
-        if not output_dir:
+        if not self.current_file_path or not output_dir or self.thread is not None:
+            if self.current_file_path and not output_dir:
+                self.notification_manager.show_notification(
+                    "Valitse tallennuskansio ennen jakamista.", "warning"
+                )
             return
 
         mode = self.mode_selector.get_selected_mode()
@@ -327,7 +433,7 @@ class MainWindow(QMainWindow):
             if mode == 0:
                 pages_per_file = self.fixed_settings.get_pages_per_file()
                 if pages_per_file <= 0:
-                    raise ValueError("Sivuja per tiedosto > 0.")
+                    raise ValueError("Sivuja per tiedosto tulee olla enemmän kuin 0.")
                 settings = pages_per_file
             else:
                 ranges = self.range_manager.get_ranges()
@@ -362,26 +468,24 @@ class MainWindow(QMainWindow):
             self.thread.start()
 
         except ValueError as e:
+            logger.exception("Virheelliset asetukset")
             self.notification_manager.show_notification(
-                f"Virheelliset asetukset: {e}", "error"
+                "Virheelliset asetukset. Tarkista syöttämäsi arvot.", "error"
             )
-        except Exception as e:
+        except Exception:
+            logger.exception("Odottamaton virhe jaon aloituksessa")
             self.notification_manager.show_notification(
-                f"Jakon aloitus epäonnistui: {e}", "error"
+                "Jaon aloitus epäonnistui odottamattoman virheen vuoksi.", "error"
             )
             self._set_ui_enabled(True)
+            self.progress_bar.setVisible(False)
 
     @pyqtSlot(list)
     def _on_split_finished(self, output_files: List[str]):
-        """Käsittelee onnistuneen PDF-tiedoston jakamisen.
-
-        Args:
-            output_files: Lista luoduista tiedostoista.
-        """
         if output_files:
             output_dir = os.path.dirname(output_files[0])
             self.notification_manager.show_notification(
-                f"PDF jaettu {len(output_files)} tiedostoon. Tallennettu: {output_dir}",
+                f"PDF jaettu {len(output_files)} tiedostoon. Tiedosto tallennettu: {output_dir}",
                 "success",
             )
         else:
@@ -393,38 +497,19 @@ class MainWindow(QMainWindow):
 
     @pyqtSlot(str)
     def _on_split_error(self, error_message: str):
-        """Käsittelee virheen PDF-tiedoston jakamisessa.
-
-        Args:
-            error_message: Virheviesti.
-        """
         self.notification_manager.show_notification(error_message, "error")
         self._set_ui_enabled(True)
         self.progress_bar.setVisible(False)
 
     @pyqtSlot(int)
     def _update_progress(self, value: int):
-        """Päivittää edistymispalkin arvon.
-
-        Args:
-            value: Edistymisen prosenttiosuus.
-        """
         self.progress_bar.setValue(value)
 
     def _split_cleanup(self):
-        """Siivoaa jakamisen jälkeiset resurssit."""
         self.thread = None
         self.worker = None
 
     def _validate_custom_ranges(self, ranges: List[Tuple[int, int]]) -> bool:
-        """Tarkistaa mukautettujen alueiden kelvollisuuden.
-
-        Args:
-            ranges: Lista mukautettuja alueita.
-
-        Returns:
-            True, jos alueet ovat kelvollisia, muuten False.
-        """
         if not ranges:
             self.notification_manager.show_notification(
                 "Määrittele vähintään yksi sivualue.", "error"
@@ -433,19 +518,14 @@ class MainWindow(QMainWindow):
         return True
 
     def _set_ui_enabled(self, enabled: bool):
-        """Asettaa käyttöliittymän komponenttien tilan.
-
-        Args:
-            enabled: True, jos käyttöliittymä on käytössä, muuten False.
-        """
-        self.drop_area.setEnabled(enabled)
+        self.drop_area.setEnabled(True)
         self.file_info_section.setEnabled(enabled)
         self.mode_selector.setEnabled(enabled)
         self.settings_stack.setEnabled(enabled)
-        self.split_button.setEnabled(enabled and self.current_file_path is not None)
+        self.output_group.setEnabled(True)
+        self._update_split_button_state()
 
     def closeEvent(self, event):
-        """Varmistaa, että säie lopetetaan kun ikkuna suljetaan."""
         if self.thread and self.thread.isRunning():
             self.worker.cancel()
             self.thread.quit()
@@ -453,19 +533,9 @@ class MainWindow(QMainWindow):
         event.accept()
 
     def showEvent(self, event):
-        """Varmistaa ilmoituksen oikean sijainnin näytölle tullessa.
-
-        Args:
-            event: Näyttämistapahtuma.
-        """
         super().showEvent(event)
         self.notification_manager.position_notification()
 
     def resizeEvent(self, event):
-        """Varmistaa ilmoituksen oikean sijainnin koon muutoksen jälkeen.
-
-        Args:
-            event: Koonmuutostapahtuma.
-        """
         super().resizeEvent(event)
         self.notification_manager.position_notification()

@@ -1,4 +1,5 @@
-"""Moduuli PDF-dokumentin jakamistilan valintakomponentille.
+"""
+Moduuli PDF-dokumentin jakamistilan valintakomponentille.
 
 Tarjoaa `ModeSelectorGroup`-luokan, joka on QGroupBox ja sisältää
 radiopainikkeet PDF:n jakamistavan valitsemiseksi: joko kiinteän
@@ -7,11 +8,12 @@ sivumäärän mukaan tai mukautettujen sivualueiden perusteella.
 
 from PyQt6.QtWidgets import QGroupBox, QHBoxLayout, QRadioButton, QButtonGroup
 from PyQt6.QtCore import pyqtSignal
-from ui.styles.group_styles import COMMON_GROUP_BOX_STYLE
+from ui.styles.container_styles import ContainerStyles
 
 
 class ModeSelectorGroup(QGroupBox):
-    """Ryhmälaatikko PDF-dokumentin jakamistilan valintaan.
+    """
+    Ryhmälaatikko PDF-dokumentin jakamistilan valintaan.
 
     Sisältää kaksi radiopainiketta (`QRadioButton`), joilla käyttäjä voi
     valita haluamansa jakotavan. Lähettää signaalin, kun valinta muuttuu.
@@ -26,13 +28,14 @@ class ModeSelectorGroup(QGroupBox):
     mode_changed = pyqtSignal(int)
 
     def __init__(self, parent=None):
-        """Alustaa jakamistilan valintaryhmän.
+        """
+        Alustaa jakamistilan valintaryhmän.
 
         Args:
             parent (QWidget, optional): Isäntäwidget. Oletus None.
         """
         super().__init__("Jakamistila", parent)
-        self.setStyleSheet(COMMON_GROUP_BOX_STYLE)
+        ContainerStyles.apply_group_box_style(self)
         self._init_ui()
 
     def _init_ui(self):
@@ -60,7 +63,8 @@ class ModeSelectorGroup(QGroupBox):
         mode_layout.addStretch(1)
 
     def _on_mode_toggled(self, checked):
-        """Käsittelee radiopainikkeen tilan muutoksen.
+        """
+        Käsittelee radiopainikkeen tilan muutoksen.
 
         Lähettää `mode_changed`-signaalin vain, kun painike *valitaan*.
 
@@ -73,7 +77,8 @@ class ModeSelectorGroup(QGroupBox):
                 self.mode_changed.emit(selected_id)
 
     def get_selected_mode(self):
-        """Palauttaa tällä hetkellä valitun jakamistilan ID:n.
+        """
+        Palauttaa tällä hetkellä valitun jakamistilan ID:n.
 
         Returns:
             int: 0 (Kiinteä jako) tai 1 (Mukautetut alueet).

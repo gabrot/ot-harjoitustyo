@@ -12,21 +12,11 @@ from PyQt6.QtWidgets import (
     QFrame,
 )
 from PyQt6.QtCore import Qt, pyqtSignal
-from ui.styles.button_styles import ADD_RANGE_BUTTON_STYLE
+from ui.styles.button_styles import ButtonStyles
+from ui.styles.dialog_styles import DialogStyles
 
-RANGE_INPUT_STYLE = """
-    QSpinBox {
-        padding: 3px;
-        border: 1px solid #ddd;
-        border-radius: 3px;
-        min-width: 60px;
-        background-color: white;
-        color: black;
-    }
-"""
 
 class CustomRangeRow(QWidget):
-    """Yksittäinen rivi mukautetun sivualueen määrittämiseksi."""
 
     removed = pyqtSignal(QWidget)
 
@@ -36,7 +26,8 @@ class CustomRangeRow(QWidget):
         page_count: int = 0,
         use_frames: bool = True,
     ):
-        """Alustaa uuden sivualuerivin.
+        """
+        Alustaa uuden sivualuerivin.
 
         Args:
             parent: Yläkomponentti, johon tämä rivi kuuluu
@@ -49,7 +40,6 @@ class CustomRangeRow(QWidget):
         self._init_ui()
 
     def _init_ui(self):
-        """Alustaa rivin käyttöliittymäkomponentit ja asettelun."""
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(5)
@@ -59,7 +49,7 @@ class CustomRangeRow(QWidget):
         self.start_spin.setMinimum(1)
         self.start_spin.setMaximum(max(1, self.page_count))
         self.start_spin.setFixedWidth(60)
-        self.start_spin.setStyleSheet(RANGE_INPUT_STYLE)
+        DialogStyles.apply_range_input_style(self.start_spin)
         self.start_spin.setToolTip("Alueen ensimmäinen sivu")
 
         self.end_spin = QSpinBox(self)
@@ -67,7 +57,7 @@ class CustomRangeRow(QWidget):
         self.end_spin.setMaximum(max(1, self.page_count))
         self.end_spin.setValue(max(1, self.page_count))
         self.end_spin.setFixedWidth(60)
-        self.end_spin.setStyleSheet(RANGE_INPUT_STYLE)
+        DialogStyles.apply_range_input_style(self.end_spin)
         self.end_spin.setToolTip("Alueen viimeinen sivu")
 
         page_label = QLabel("Sivut")
@@ -77,8 +67,8 @@ class CustomRangeRow(QWidget):
         dash_label.setFrameStyle(QFrame.Shape.NoFrame)
 
         remove_btn = QPushButton("×")
-        remove_btn.setObjectName("DeleteRangeButton")  
-        remove_btn.setFixedSize(24, 24) 
+        ButtonStyles.apply_delete_button_style(remove_btn)
+        remove_btn.setFixedSize(24, 24)
         remove_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         remove_btn.clicked.connect(self._on_remove_clicked)
         remove_btn.setToolTip("Poista tämä sivualue")
@@ -96,25 +86,20 @@ class CustomRangeRow(QWidget):
         self._adjust_end_spin_min()
 
     def _adjust_end_spin_min(self):
-        """Säätää loppusivun minimiarvoa alkusivun perusteella."""
         self.end_spin.setMinimum(self.start_spin.value())
 
     def _adjust_start_spin_max(self):
-        """Säätää alkusivun maksimiarvoa loppusivun perusteella."""
         self.start_spin.setMaximum(self.end_spin.value())
 
     def _on_remove_clicked(self):
-        """Lähettää 'removed'-signaalin."""
         self.removed.emit(self)
 
     def get_range(self) -> Optional[Tuple[int, int]]:
-        """Palauttaa riville asetetun sivualueen."""
         start = self.start_spin.value()
         end = self.end_spin.value()
         return (start, end) if start <= end else None
 
     def update_page_count(self, page_count: int):
-        """Päivittää spinboxien maksimiarvon."""
         self.page_count = max(0, page_count)
         max_val = max(1, self.page_count)
 
@@ -145,7 +130,14 @@ class CustomRangeManager:
         page_count: int = 0,
         use_frames: bool = True,
     ):
-        """Alustaa sivualueiden hallintakomponentin."""
+        """
+        Alustaa sivualueiden hallintakomponentin.
+        
+        Args:
+            parent: Yläkomponentti, johon tämä manageri kuuluu
+            page_count: PDF:n sivujen kokonaismäärä
+            use_frames: Käytetäänkö kehyksiä tyylittelyssä
+        """
         self.parent = parent
         self.page_count = page_count
         self.use_frames = use_frames
@@ -153,7 +145,6 @@ class CustomRangeManager:
         self._init_ui()
 
     def _init_ui(self):
-        """Alustaa managerin käyttöliittymäkomponentit."""
         self.scroll_widget = QWidget(self.parent)
         self.scroll_widget.setStyleSheet("background-color: transparent;")
         self.scroll_layout = QVBoxLayout(self.scroll_widget)
@@ -165,24 +156,14 @@ class CustomRangeManager:
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setWidget(self.scroll_widget)
         self.scroll_area.setFrameShape(QFrame.Shape.NoFrame)
-        self.scroll_area.setStyleSheet(
-            """
-            QScrollArea { background-color: transparent; border: none; }
-            QScrollBar:vertical { background-color: transparent; width: 8px; margin: 0; border-radius: 4px; }
-            QScrollBar::handle:vertical { background-color: #cccccc; border-radius: 4px; min-height: 25px; }
-            QScrollBar::handle:vertical:hover { background-color: #bbbbbb; }
-            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0px; background: none; }
-            QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical { background: none; }
-        """
-        )
+        DialogStyles.apply_scrollarea_style(self.scroll_area)
 
         self.add_button = QPushButton("+ Lisää sivualue")
         self.add_button.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.add_button.setStyleSheet(ADD_RANGE_BUTTON_STYLE)
+        ButtonStyles.apply_add_range_style(self.add_button)
         self.add_button.clicked.connect(self.add_custom_range)
 
     def add_custom_range(self):
-        """Lisää uuden `CustomRangeRow`-widgetin."""
         stretch_item = self.scroll_layout.takeAt(self.scroll_layout.count() - 1)
         new_row = CustomRangeRow(self.scroll_widget, self.page_count, self.use_frames)
         new_row.removed.connect(self.remove_range_row)
@@ -193,7 +174,12 @@ class CustomRangeManager:
         new_row.update_page_count(self.page_count)
 
     def remove_range_row(self, row: CustomRangeRow):
-        """Poistaa annetun `CustomRangeRow`-widgetin."""
+        """
+        Poistaa annetun `CustomRangeRow`-widgetin.
+        
+        Args:
+            row: Poistettava rivi
+        """
         if len(self.range_rows) <= 1:
             return
         if row in self.range_rows:
@@ -202,25 +188,47 @@ class CustomRangeManager:
             row.deleteLater()
 
     def get_scroll_area(self) -> QScrollArea:
-        """Palauttaa QScrollArea-widgetin."""
+        """
+        Palauttaa QScrollArea-widgetin.
+        
+        Returns:
+            QScrollArea: Vieritysalue, joka sisältää sivualuerivit
+        """
         return self.scroll_area
 
     def get_add_button(self) -> QPushButton:
-        """Palauttaa 'Lisää sivualue' -painikkeen."""
+        """
+        Palauttaa 'Lisää sivualue' -painikkeen.
+        
+        Returns:
+            QPushButton: Lisäyspainike
+        """
         return self.add_button
 
     def get_ranges(self) -> List[Tuple[int, int]]:
-        """Palauttaa listan kelvollisista sivualueista."""
+        """
+        Palauttaa listan kelvollisista sivualueista.
+        
+        Returns:
+            List[Tuple[int, int]]: Lista sivualueista (alku, loppu)
+        """
         return [rng for row in self.range_rows if (rng := row.get_range()) is not None]
 
     def update_page_count(self, page_count: int):
-        """Päivittää PDF:n sivumäärän ja välittää sen riveille."""
+        """
+        Päivittää PDF:n sivumäärän ja välittää sen riveille.
+        
+        Args:
+            page_count: Uusi sivumäärä
+        """
         self.page_count = max(0, page_count)
         for row in self.range_rows:
             row.update_page_count(self.page_count)
 
     def reset(self):
-        """Palauttaa managerin alkutilaan."""
+        """
+        Palauttaa managerin alkutilaan.
+        """
         while len(self.range_rows) > 0:
             row_to_remove = self.range_rows.pop()
             self.scroll_layout.removeWidget(row_to_remove)

@@ -1,6 +1,8 @@
 # Scanflow - PDF-jakaja
 Scanflow tarjoaa käyttäjäystävällisen ratkaisun PDF-tiedostojen jakamiseen. Käyttäjä voi jakaa kokonaiset PDF-tiedostot pienempiin osiin, kuten yksittäisiksi sivuiksi tai määriteltyjen sivujoukkojen perusteella.
 
+![Scanflow käyttöliittymä](./scanflow/dokumentaatio/kuvat/sovelluksen_paaikkuna.png)
+
 ## 📚 Dokumentaatio
 
 Kaikki projektin dokumentit löytyvät kansiosta [dokumentaatio](./scanflow/dokumentaatio/):
@@ -8,6 +10,7 @@ Kaikki projektin dokumentit löytyvät kansiosta [dokumentaatio](./scanflow/doku
 - 📄 [Vaatimusmäärittely](./scanflow/dokumentaatio/vaatimusmaarittely.md)
 - 🏗️ [Arkkitehtuuri](./scanflow/dokumentaatio/arkkitehtuuri.md)
 - 👨‍🏫 [Käyttöohje](./scanflow/dokumentaatio/kayttoohje.md)
+- 🧪 [Testausdokumentti](./scanflow/dokumentaatio/testausdokumentti.md)
 - 📝 [Changelog](./scanflow/dokumentaatio/changelog.md)
 - ⏱️ [Tuntikirjanpito](./scanflow/dokumentaatio/tuntikirjanpito.md)
 
@@ -62,4 +65,8 @@ poetry run invoke lint
 
 ## Releaset
 
-- [Viikko 5](https://github.com/gabrot/ot-harjoitustyo/releases/tag/viikko5)
+- [Viikko 5 release](https://github.com/gabrot/ot-harjoitustyo/releases/tag/viikko5)
+- [Viikko 6 release](https://github.com/gabrot/ot-harjoitustyo/releases/tag/viikko6)
+- [Final release](https://github.com/gabrot/ot-harjoitustyo/releases/latest)
+
+

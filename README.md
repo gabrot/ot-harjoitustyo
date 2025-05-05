@@ -25,7 +25,7 @@ Kaikki projektin dokumentit löytyvät kansiosta [dokumentaatio](./scanflow/doku
    ```bash
    poetry install
    ```
-   > 💡 Käytä komentoa `poetry install --only main` mikäli haluat asentaa ohjleman ilman dev-riippuvuuksia
+   > 💡 Käytä komentoa `poetry install --only main` mikäli haluat asentaa ohjelman ilman dev-riippuvuuksia
 
 3. Käynnistä sovellus:
    ```bash
@@ -74,14 +74,14 @@ poetry run invoke lint
 
 ### Yleistä
 
-Sovelluksen voi kääntää suoritettaviksi tiedostoiksi käyttäen [PyInstalleria](https://pyinstaller.org/). Build-työkalut on määrilty `dev`-riippuvuudeksi.
+Sovelluksen voi kääntää suoritettaviksi tiedostoiksi käyttäen [PyInstalleria](https://pyinstaller.org/). Build-työkalut on määritelty `dev`-riippuvuudeksi.
 
 ### Riippuvuuksien asennus
 
 ```bash
 poetry install --with dev
 ```
-### Buildaus ohjeet
+### Buildausohjeet
 #### Windows
 
 ```bash
@@ -94,7 +94,7 @@ poetry run invoke build-windows
 poetry run invoke build-macos
 ```
 
-#### Linux-build
+#### Linux
 
 ```bash
 poetry run invoke build-linux

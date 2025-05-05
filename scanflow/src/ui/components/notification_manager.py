@@ -7,7 +7,7 @@ näyttämistä ja piilottamista sovellusikkunan yläreunassa käyttäen animaati
 
 from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QPushButton
 from PyQt6.QtCore import Qt, QTimer, QPropertyAnimation, QEasingCurve, QRect
-from ui.styles.dialog_styles import DialogStyles
+from src.ui.styles.dialog_styles import DialogStyles
 
 
 class NotificationManager:

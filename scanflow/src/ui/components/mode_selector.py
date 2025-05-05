@@ -8,7 +8,7 @@ sivumäärän mukaan tai mukautettujen sivualueiden perusteella.
 
 from PyQt6.QtWidgets import QGroupBox, QHBoxLayout, QRadioButton, QButtonGroup
 from PyQt6.QtCore import pyqtSignal
-from ui.styles.container_styles import ContainerStyles
+from src.ui.styles.container_styles import ContainerStyles
 
 
 class ModeSelectorGroup(QGroupBox):

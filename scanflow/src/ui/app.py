@@ -24,34 +24,13 @@ from PyQt6.QtWidgets import (
     QScrollArea,
 ) # pylint: disable=no-name-in-module
 from PyQt6.QtCore import Qt, QThread, QObject, pyqtSignal, pyqtSlot 
-from ui.styles import BaseStyles, ButtonStyles, ContainerStyles, DialogStyles, QtTheme
-from ui.components.drop_area_widget import DropAreaWidget
-from ui.components.custom_range_manager import CustomRangeManager
-from ui.components.notification_manager import NotificationManager
-from ui.components.fixed_range_settings import FixedRangeSettings
-from ui.components.file_info_section import FileInfoSection
-from ui.components.mode_selector import ModeSelectorGroup
-
-log_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-log_file = os.path.join(log_dir, "scanflow.log")
-
-log_formatter_file = logging.Formatter(
-    "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
-log_formatter_console = logging.Formatter("%(levelname)s: %(message)s")
-
-file_handler = logging.FileHandler(log_file, encoding="utf-8")
-file_handler.setLevel(logging.DEBUG)
-file_handler.setFormatter(log_formatter_file)
-
-console_handler = logging.StreamHandler()
-console_handler.setLevel(logging.INFO)
-console_handler.setFormatter(log_formatter_console)
-
-root_logger = logging.getLogger()
-root_logger.setLevel(logging.DEBUG)
-root_logger.addHandler(file_handler)
-root_logger.addHandler(console_handler)
+from src.ui.styles import BaseStyles, ButtonStyles, ContainerStyles, DialogStyles, QtTheme
+from src.ui.components.drop_area_widget import DropAreaWidget
+from src.ui.components.custom_range_manager import CustomRangeManager
+from src.ui.components.notification_manager import NotificationManager
+from src.ui.components.fixed_range_settings import FixedRangeSettings
+from src.ui.components.file_info_section import FileInfoSection
+from src.ui.components.mode_selector import ModeSelectorGroup
 
 logger = logging.getLogger(__name__)
 

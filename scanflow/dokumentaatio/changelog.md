@@ -1,4 +1,10 @@
 # Changelog
+## Viikko 7 - loppupalautus
+- Päivitetty testiraportti
+- Päivitetty koodia ja testejä
+- Paranneltu logitusta
+- Dokumentaatio viimeistelty
+
 ## Viikko 6
 - Toteutettu käyttöliittymä parannuksia ja hienosäätöä
 - Lisätty mahdollisuus valita tiedostosijainti tiedoston lisäämisen jälkeen

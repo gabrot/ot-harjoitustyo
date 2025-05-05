@@ -6,7 +6,7 @@ PyQt-käyttöliittymäkomponenteille. Tarjoaa `get_stylesheet`-metodin
 sovelluksen tyylisäännöstön hakemiseen.
 """
 
-from ui.styles.base_styles import BaseStyles
+from src.ui.styles.base_styles import BaseStyles
 
 class QtTheme:
     """

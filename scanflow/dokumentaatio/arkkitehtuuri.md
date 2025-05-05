@@ -159,9 +159,122 @@ graph TD
 ```
 **Selitys:**
 
-1.  **Käyttöliittymä (UI)**: `src/ui/`-hakemiston komponentit, erityisesti `MainWindow` (`app.py`), vastaavat käyttäjän syötteiden vastaanottamisesta ja tulosten esittämisestä. Käyttöliittymä ei sisällä varsinaista PDF:n käsittelylogiikkaa. Raskaat PDF-operaatiot suoritetaan `Worker`-luokassa omassa `QThread`-säikeessä, jotta käyttöliittymä pysyy responsiivisena.
-2.  **Palvelukerros (Service)**: `src/services/pdf_splitter_service.py` sisältää sovelluksen ydinlogiikan. `PDFSplitterService` ottaa vastaan pyyntöjä (toteutetaan `Worker`-säikeessä) ja käyttää `PDFRepository`:a tiedostojen käsittelyyn.
-3.  **Tietovarasto (Repository)**: `src/repositories/pdf_repository.py` vastaa kaikesta suorasta vuorovaikutuksesta tiedostojärjestelmän ja PDF-kirjaston (PyMuPDF/`fitz`) kanssa.
+1.  **Käyttöliittymä (UI)**: `src/ui/`-hakemiston komponentit, erityisesti `MainWindow` (`app.py`), vastaavat käyttäjän syötteiden vastaanottamisesta ja tulosten esittämisestä. Käyttöliittymä ei sisällä varsinaista PDF:n käsittelylogiikkaa. Raskaat PDF-operaatiot delegoidaan `Worker`-luokalle, joka suoritetaan omassa `QThread`-säikeessä, jotta käyttöliittymä pysyy responsiivisena.
+2.  **Palvelukerros (Service)**: `src/services/pdf_splitter_service.py` sisältää sovelluksen ydinlogiikan. `PDFSplitterService` ottaa vastaan pyyntöjä käyttöliittymästä (toteutetaan `Worker`-säikeessä) ja käyttää `PDFRepository`:a tiedostojen käsittelyyn. `FallbackPDFService` tarkoitus on tarjota vaihtoehtoinen toteutus.
+3.  **Tietovarasto (Repository)**: `src/repositories/pdf_repository.py` vastaa kaikesta suorasta vuorovaikutuksesta tiedostojärjestelmän ja PDF-kirjaston (PyMuPDF/`fitz`) kanssa. 
+
+```mermaid
+classDiagram
+    class MainWindow {
+        +pdf_service: PDFService
+        +worker: Worker
+        +notification_manager: NotificationManager
+        +drop_area: DropAreaWidget
+        +file_info: FileInfoSection
+        +mode_selector: ModeSelectorGroup
+        +fixed_settings: FixedRangeSettings
+        +custom_manager: CustomRangeManager
+        +progress_bar: QProgressBar
+        +split_button: QPushButton
+        +__init__(pdf_service)
+        +handle_file_drop(path)
+        +start_split()
+        +update_progress(value)
+        +handle_finished(result)
+        +handle_error(message)
+    }
+
+    class Worker {
+        <<QThread>>
+        +pdf_service: PDFService
+        +file_path: str
+        +settings: dict
+        +mode: str
+        +output_dir: str
+        +progress: pyqtSignal(int)
+        +finished: pyqtSignal(object)
+        +error: pyqtSignal(str)
+        +run()
+    }
+
+    class PDFService {
+        <<Interface>>
+        +get_pdf_info(path)
+        +split_by_fixed_range(path, range_size, output_dir, progress_callback)
+        +split_by_custom_ranges(path, ranges, output_dir, progress_callback)
+    }
+
+    class PDFSplitterService {
+        +repository: PDFRepository
+        +get_pdf_info(path)
+        +split_by_fixed_range(...)
+        +split_by_custom_ranges(...)
+    }
+    PDFSplitterService --|> PDFService
+    PDFSplitterService ..> PDFRepository : uses
+
+    class FallbackPDFService {
+        +get_pdf_info(path)
+        +split_by_fixed_range(...)
+        +split_by_custom_ranges(...)
+    }
+    FallbackPDFService --|> PDFService
+
+    class PDFRepository {
+        +get_page_count(path)
+        +open_pdf(path)
+        +extract_pages(doc, range)
+        +save_new_pdf(new_doc, path)
+        +close_pdf(doc)
+    }
+    PDFRepository ..> PyMuPDF : uses
+
+    class NotificationManager {
+        +parent_window: QMainWindow
+        +show_notification(message, type, duration)
+        +hide_notification()
+    }
+
+    class DropAreaWidget {
+        <<QFrame>>
+        +file_dropped: pyqtSignal(str)
+        +dragEnterEvent(event)
+        +dropEvent(event)
+    }
+
+    class FileInfoSection {
+        <<QFrame>>
+        +update_info(name, count)
+        +clear_info()
+    }
+
+    class ModeSelectorGroup {
+        <<QGroupBox>>
+        +mode_selected: pyqtSignal(str)
+    }
+
+    class FixedRangeSettings {
+        <<QWidget>>
+        +get_range_size()
+    }
+
+    class CustomRangeManager {
+        <<QWidget>>
+        +add_custom_range()
+        +get_ranges()
+    }
+
+    MainWindow o-- Worker
+    MainWindow o-- NotificationManager
+    MainWindow o-- DropAreaWidget
+    MainWindow o-- FileInfoSection
+    MainWindow o-- ModeSelectorGroup
+    MainWindow o-- FixedRangeSettings
+    MainWindow o-- CustomRangeManager
+    MainWindow ..> PDFService : uses
+    Worker ..> PDFService : uses
+
+```
 
 ---
 
@@ -180,6 +293,50 @@ graph TD
 11. `Worker` lähettää `progress`-signaaleja `MainWindow`:lle, joka päivittää `QProgressBar`:ta.
 12. Kun jako on valmis, `Worker` lähettää `finished`-signaalin (sisältäen luotujen tiedostojen polut) tai `error`-signaalin `MainWindow`:lle.
 13. `MainWindow` vastaanottaa signaalin, lopettaa `Worker`-säikeen, päivittää käyttöliittymän (`NotificationManager` näyttää ilmoituksen) ja aktivoi käyttöliittymäkomponentit uudelleen.
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant MainWindow
+    participant Worker
+    participant PDFService
+    participant PDFRepository
+    participant PyMuPDF
+
+    User->>+MainWindow: Pudottaa/Valitsee PDF-tiedoston
+    MainWindow->>+Worker: Käynnistää Worker-säikeen (get_pdf_info)
+    Worker->>+PDFService: get_pdf_info(path)
+    PDFService->>+PDFRepository: get_page_count(path)
+    PDFRepository->>+PyMuPDF: Avaa PDF, laske sivut
+    PyMuPDF-->>-PDFRepository: Sivumäärä
+    PDFRepository-->>-PDFService: Sivumäärä
+    PDFService-->>-Worker: Tiedot (nimi, sivumäärä)
+    Worker-->>-MainWindow: finished(info) signaali
+    MainWindow-->>-User: Näyttää tiedot, aktivoi asetukset
+
+    User->>MainWindow: Valitsee asetukset ja tallennuskansion
+    User->>+MainWindow: Painaa "Jaa PDF"
+    MainWindow->>+Worker: Käynnistää Worker-säikeen (split_pdf)
+    Worker->>+PDFService: split_by_fixed_range() / split_by_custom_ranges()
+    PDFService->>+PDFRepository: open_pdf(path)
+    PDFRepository->>+PyMuPDF: Avaa PDF
+    PyMuPDF-->>-PDFRepository: PDF-olio
+    loop Joka jaettava osa
+        PDFService->>PDFRepository: extract_pages(pdf_obj, range)
+        PDFRepository->>+PyMuPDF: Poimi sivut
+        PyMuPDF-->>-PDFRepository: Poimitut sivut
+        PDFService->>PDFRepository: save_new_pdf(new_pdf_obj, out_path)
+        PDFRepository->>+PyMuPDF: Tallenna uusi PDF
+        PyMuPDF-->>-PDFRepository: Tallennettu
+        Worker-->>MainWindow: progress() signaali
+    end
+    PDFRepository->>+PyMuPDF: Sulje PDF
+    PyMuPDF-->>-PDFRepository: Suljettu
+    PDFRepository-->>-PDFService: OK
+    PDFService-->>-Worker: Luotujen tiedostojen polut
+    Worker-->>-MainWindow: finished(paths) signaali
+    MainWindow-->>-User: Näyttää ilmoituksen (NotificationManager)
+```
 
 ---
 
@@ -200,6 +357,25 @@ graph TD
 | **FixedRangeSettings** | `ui/components/fixed_range_settings.py` | Kiinteän sivumääräjaon asetusten UI-komponentti.                                                      |
 | **CustomRangeManager** | `ui/components/custom_range_manager.py` | Mukautettujen sivualueiden hallinnan UI-komponentti.                                                |
 | **NotificationManager**| `ui/components/notification_manager.py` | Käyttäjälle näytettävien ilmoitusten (info, success, error) hallinta.                                |
+
+---
+
+### Käyttöliittymän tyylimäärittelyt
+
+Kaikki käyttöliittymän tyylimäärittelyt on keskitetty `src/ui/styles/`-hakemistoon. Tyylimoduulit tarjoavat metodeja, joilla komponenttien ulkoasu voidaan määrittää yhtenäisesti. .
+
+### Käyttöliittymäkomponentit
+
+Käyttöliittymäkomponentit sijaitsevat `src/ui/components/`-hakemistossa.  Komponenttien vastuut:
+
+| Komponentti              | Vastuu                                                                 |
+|--------------------------|----------------------------------------------------------------------|
+| **DropAreaWidget**       | Tiedoston pudotus- ja valinta-alueen UI-komponentti.                 |
+| **FileInfoSection**      | Näyttää valitun PDF-tiedoston perustiedot (nimi, sivumäärä).         |
+| **ModeSelectorGroup**    | Jakotavan valinnan (kiinteä/mukautettu) UI-komponentti.              |
+| **FixedRangeSettings**   | Kiinteän sivumääräjaon asetusten UI-komponentti.                    |
+| **CustomRangeManager**   | Mukautettujen sivualueiden hallinnan UI-komponentti.                 |
+| **NotificationManager**  | Käyttäjälle näytettävien ilmoitusten hallinta.|
 
 ---
 
@@ -254,7 +430,7 @@ Mukautuvan käyttöliittymän keskeiset luokat ja vastuut:
 | QtTheme | Globaalit tyylimäärittelyt, väripaletti |
 | Styles-moduulit | Komponenttikohtaiset tyylit |
 
-Tyylit otetaan käyttöön komponenteissa tyypillisesti importtaamalla tarvittava tyylimoduuli ja käyttämällä sen tarjoamia metodeja (esim. `apply_styles` tai `get_button_style`) komponentin alustuksen yhteydessä tai tarpeen mukaan.
+Tyylit otetaan käyttöön komponenteissa tyypillisesti importtaamalla tarvittava tyylimoduuli ja käyttämällä sen tarjoamia metodeja komponentin alustuksen yhteydessä tai tarpeen mukaan.
 
 Käyttöliittymän mukautuvuuden toteutus noudattaa seuraavia periaatteita:
 - Responsiivinen suunnittelu: UI mukautuu näytön kokoon
@@ -272,7 +448,7 @@ Käyttöliittymän mukautuvuuden toteutus noudattaa seuraavia periaatteita:
 * **Taustasäie (Background Thread / Worker Pattern)**: Aikaavievä PDF-jako suoritetaan `Worker`-luokassa erillisessä `QThread`-säikeessä. Tämä pitää käyttöliittymän responsiivisena. Kommunikointi pääsäikeeseen tapahtuu Qt:n signaali-slot-mekanismilla (`progress`, `finished`, `error`).
 * **Fallback Strategy**: `FallbackPDFService` tarjoaa vaihtoehtoisen, yksinkertaistetun toteutuksen, jos vaadittua `fitz`-kirjastoa ei ole asennettu, varmistaen sovelluksen jonkinasteisen toiminnan.
 
-Nämä mallit edistävät sovelluksen **laajennettavuutta** ja **testattavuutta**.
+Nämä mallit edistävät sovelluksen **laajennettavuutta** ja **testattavuutta.
 
 ---
 
@@ -281,5 +457,5 @@ Nämä mallit edistävät sovelluksen **laajennettavuutta** ja **testattavuutta*
 * Sovellus noudattaa kerrosarkkitehtuuria.
 * Käyttöliittymä on eriytetty sovelluslogiikasta ja tiedon käsittelystä.
 * Koodi pyrkii olemaan helposti laajennettavissa ja testattavissa.
-* PDF:n käsittelylogiikka ei ole sidottu käyttöliittymäkomponentteihin.
+* PDF:n käsittelylogiikka ei ole sidottu käyttöliittymäkomponenteihin.
 * Käyttöliittymän responsiivisuus varmistetaan ajamalla pitkäkestoiset operaatiot taustasäikeessä.

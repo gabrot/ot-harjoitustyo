@@ -1,11 +1,11 @@
 """
-Painikkeiden tyylimäärittelyt Scanflow-sovellukselle.
-
-Tämä moduuli sisältää tyylimäärittelyt kaikille sovelluksen painikkeille.
-Määrittelee eri painikkeiden ulkoasut ja tarjoaa metodit niiden soveltamiseksi komponentteihin.
+Painikkeiden tyylit.
 """
 
-from ui.styles.base_styles import BaseStyles
+from PyQt6.QtWidgets import QPushButton
+from PyQt6.QtCore import Qt
+
+from src.ui.styles.base_styles import BaseStyles
 
 class ButtonStyles:
     """

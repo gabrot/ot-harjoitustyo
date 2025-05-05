@@ -8,6 +8,7 @@ import sys
 import os
 import logging
 import warnings
+import tempfile
 from PyQt6 import QtWidgets
 from src.ui.app import MainWindow
 from src.services.fallback_pdf_service import FallbackPDFService
@@ -32,21 +33,56 @@ def get_pdf_service(logger):
         logger.info("Käytetään fallback-palvelua, koska varsinainen palvelu ei ole saatavilla")
         return FallbackPDFService()
 
-def setup_file_logger():
-    log_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    log_file = os.path.join(log_dir, "scanflow.log")
+def get_log_file_path():
+    """Palauttaa lokitiedoston polun huomioiden ympäristön (kehitys vs. paketoitu)"""
+    try:
+        user_home = os.path.expanduser("~")
+        app_dir = os.path.join(user_home, ".scanflow")
+        if not os.path.exists(app_dir):
+            os.makedirs(app_dir)
+        return os.path.join(app_dir, "scanflow.log")
+    except (IOError, PermissionError):
+        temp_dir = tempfile.gettempdir()
+        return os.path.join(temp_dir, "scanflow.log")
+
+def create_file_handler(log_file):
+    """Luo tiedostoon kirjoittavan lokikäsittelijän"""
     file_handler = logging.FileHandler(log_file, encoding="utf-8")
     file_handler.setLevel(logging.DEBUG)
     file_format = logging.Formatter(
         "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
     file_handler.setFormatter(file_format)
-    root_logger = logging.getLogger()
-    root_logger.setLevel(logging.DEBUG)
-    if root_logger.hasHandlers():
-        root_logger.handlers.clear()
-    root_logger.addHandler(file_handler)
-    return root_logger
+    return file_handler
+
+def create_console_handler():
+    """Luo konsoliin kirjoittavan lokikäsittelijän"""
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(logging.DEBUG)
+    console_format = logging.Formatter("%(levelname)s: %(message)s")
+    console_handler.setFormatter(console_format)
+    return console_handler
+
+def setup_file_logger():
+    """Alustaa tiedostoon kirjoittavan lokittajan"""
+    log_file = get_log_file_path()
+    try:
+        handler = create_file_handler(log_file)
+        root_logger = logging.getLogger()
+        root_logger.setLevel(logging.DEBUG)
+        if root_logger.hasHandlers():
+            root_logger.handlers.clear()
+        root_logger.addHandler(handler)
+        return root_logger
+    except (IOError, PermissionError) as e:
+        print(f"Varoitus: Lokitiedoston luonti epäonnistui: {str(e)}")
+        handler = create_console_handler()
+        root_logger = logging.getLogger()
+        root_logger.setLevel(logging.DEBUG)
+        if root_logger.hasHandlers():
+            root_logger.handlers.clear()
+        root_logger.addHandler(handler)
+        return root_logger
 
 def setup_console_logger():
     logger = logging.getLogger(__name__)
@@ -77,27 +113,41 @@ def except_hook_factory(logger):
         )
     return except_hook
 
-def main():
+def initialize_logging():
+    """Alustaa lokituksen sovellukselle"""
     setup_file_logger()
     logger = setup_console_logger()
     logger.info("Scanflow käynnistetään...")
+    logger.info("Lokitiedoston sijainti: %s", get_log_file_path())
+    return logger
 
-    app = QtWidgets.QApplication(sys.argv) # pylint: disable=c-extension-no-member
+def initialize_application():
+    """Alustaa Qt-sovelluksen"""
+    return QtWidgets.QApplication(sys.argv) # pylint: disable=c-extension-no-member
+
+def start_ui(logger):
+    """Käynnistää käyttöliittymän ja asettaa virheenkäsittelijät"""
     sys.excepthook = except_hook_factory(logger)
-
     try:
         pdf_service = get_pdf_service(logger)
         window = MainWindow(pdf_service)
         window.show()
-        sys.exit(app.exec())
-    except (RuntimeError, ImportError):
-        logger.exception("Virhe sovelluksen käynnistyksessä")
+        return window
+    except (RuntimeError, ImportError) as e:
+        logger.exception("Virhe sovelluksen käynnistyksessä: %s", str(e))
         show_critical_message(
             "Käynnistysvirhe",
             "Sovelluksen käynnistäminen epäonnistui. "
             "Tarkista lokitiedosto lisätietoja varten."
         )
         sys.exit(1)
+
+def main():
+    """Sovelluksen pääfunktio"""
+    logger = initialize_logging()
+    app = initialize_application()
+    start_ui(logger)
+    sys.exit(app.exec())
 
 if __name__ == "__main__":
     main()

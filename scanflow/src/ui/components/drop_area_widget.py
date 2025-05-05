@@ -18,8 +18,8 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt, QMimeData, pyqtSignal
 from PyQt6.QtGui import QDragEnterEvent, QDropEvent, QMouseEvent
-from ui.styles.container_styles import ContainerStyles
-from ui.styles.button_styles import ButtonStyles
+from src.ui.styles.container_styles import ContainerStyles
+from src.ui.styles.button_styles import ButtonStyles
 
 
 class DropAreaWidget(QFrame):

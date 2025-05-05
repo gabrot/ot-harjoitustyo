@@ -6,8 +6,8 @@ erilaisille asetuskomponenteille. Tyylimäärittelyt on toteutettu
 CSS-tyylisäännöstöillä, jotka voidaan soveltaa sopiviin komponentteihin.
 """
 
-from ui.styles.base_styles import BaseStyles
-from ui.styles.button_styles import ButtonStyles
+from src.ui.styles.base_styles import BaseStyles
+from src.ui.styles.button_styles import ButtonStyles
 
 
 class DialogStyles:

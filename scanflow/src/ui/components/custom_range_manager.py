@@ -12,8 +12,8 @@ from PyQt6.QtWidgets import (
     QFrame,
 )
 from PyQt6.QtCore import Qt, pyqtSignal
-from ui.styles.button_styles import ButtonStyles
-from ui.styles.dialog_styles import DialogStyles
+from src.ui.styles.button_styles import ButtonStyles
+from src.ui.styles.dialog_styles import DialogStyles
 
 
 class CustomRangeRow(QWidget):

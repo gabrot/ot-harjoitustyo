@@ -25,6 +25,7 @@ Kaikki projektin dokumentit löytyvät kansiosta [dokumentaatio](./scanflow/doku
    ```bash
    poetry install
    ```
+   > 💡 Käytä komentoa `poetry install --only main` mikäli haluat asentaa ohjleman ilman dev-riippuvuuksia
 
 3. Käynnistä sovellus:
    ```bash
@@ -69,4 +70,41 @@ poetry run invoke lint
 - [Viikko 6 release](https://github.com/gabrot/ot-harjoitustyo/releases/tag/viikko6)
 - [Final release](https://github.com/gabrot/ot-harjoitustyo/releases/latest)
 
+## 🏗️ Build
 
+### Yleistä
+
+Sovelluksen voi kääntää suoritettaviksi tiedostoiksi käyttäen [PyInstalleria](https://pyinstaller.org/). Build-työkalut on määrilty `dev`-riippuvuudeksi.
+
+### Riippuvuuksien asennus
+
+```bash
+poetry install --with dev
+```
+### Buildaus ohjeet
+#### Windows
+
+```bash
+poetry run invoke build-windows
+```
+
+#### macOS
+
+```bash
+poetry run invoke build-macos
+```
+
+#### Linux-build
+
+```bash
+poetry run invoke build-linux
+```
+
+### Huomioitavaa
+
+- Kuvakkeet tulee lisätä paikallisesti `src/assets/`-kansioon. Kuvakkeita ei ole versioitu.
+- Buildauksen jälkeen julkaistavat ohjelmat löytyvät `dist/`-kansiosta
+
+## Lisenssi
+
+Tämä projekti on lisensoitu MIT-lisenssillä. Katso lisätiedot [`LICENSE`](LICENSE).

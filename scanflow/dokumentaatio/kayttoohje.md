@@ -14,24 +14,23 @@ Tämä ohje opastaa sovelluksen asentamisessa ja käytössä vaihe vaiheelta.
 - [Vinkkejä](#vinkkejä)
 
 ## Sovelluksen käynnistäminen
+Löydät lähdekoodin sekä Linux, Windows ja macOS sovellukset [**Releases-osiosta**](https://github.com/gabrot/ot-harjoitustyo/releases/latest).
 
+
+### Sovelluksen suorittaminen lähdekoodia käyttäen
 1. **Lataa projektin uusin release** GitHubin [Releases-osiosta](https://github.com/gabrot/ot-harjoitustyo/releases/latest) ja valitse **"Source code (zip)"** tai **"Source code (tar.gz)"**.
 
 2. **Pura ladattu arkisto** ja siirry hakemistoon, joka sisältää tiedoston `pyproject.toml`.
 
-> 💡 **Huom:** Tämä on projektin juurihakemisto, jossa sijaitsee mm. `pyproject.toml`, `poetry.lock`, `README.md` jne. Älä aja komentoa `poetry install` väärässä alikansiossa kuten `src/`.
+   > 💡 **Huom:** Tämä on projektin juurihakemisto, jossa sijaitsee mm. `pyproject.toml`, `poetry.lock`. Älä aja komentoa `poetry install` väärässä alikansiossa kuten `src/`.
 
-3. **Asenna riippuvuudet:**
-
-   ```bash
-   poetry install
-   ```
-
-4. **Käynnistä sovellus:**
+3. **Asenna ja käynnistys komentorivillä:**
 
    ```bash
+   poetry install --only main
    poetry run invoke start
    ```
+
 
 ---
 

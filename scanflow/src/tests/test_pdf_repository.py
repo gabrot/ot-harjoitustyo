@@ -3,10 +3,18 @@ import unittest
 from unittest.mock import patch, MagicMock
 import os
 import sys
+import fitz
 
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
+
+TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), "test_data")
+EMPTY_PDF = os.path.join(TEST_DATA_DIR, "empty.pdf")
+FAKE_PDF = os.path.join(TEST_DATA_DIR, "fake.pdf")
+BROKEN_PDF = os.path.join(TEST_DATA_DIR, "broken.pdf")
+CORRUPT_TRUNCATED_PDF = os.path.join(TEST_DATA_DIR, "corrupt_truncated.pdf")
+
 
 class TestPDFRepository(unittest.TestCase):
 
@@ -67,6 +75,43 @@ class TestPDFRepository(unittest.TestCase):
             self.repository.load_pdf(self.test_file_path)
         mock_os_exists.assert_called_once_with(self.test_file_path)
         mock_fitz_open.assert_called_once_with(self.test_file_path)
+
+    @patch("os.path.exists", return_value=True)
+    @patch("fitz.open", side_effect=Exception("cannot open empty file"))
+    def test_load_pdf_empty_file(self, mock_fitz_open, mock_os_exists):
+        with self.assertRaisesRegex(
+            ValueError, "avaaminen epäonnistui: cannot open empty file"
+        ):
+            self.repository.load_pdf(EMPTY_PDF)
+        mock_os_exists.assert_called_once_with(EMPTY_PDF)
+        mock_fitz_open.assert_called_once_with(EMPTY_PDF)
+
+    @patch("os.path.exists", return_value=True)
+    @patch("fitz.open", side_effect=Exception("not a PDF"))
+    def test_load_pdf_non_pdf_content(self, mock_fitz_open, mock_os_exists):
+        """Test loading a file with non-PDF text content."""
+        with self.assertRaisesRegex(ValueError, "avaaminen epäonnistui: not a PDF"):
+            self.repository.load_pdf(FAKE_PDF)
+        mock_os_exists.assert_called_once_with(FAKE_PDF)
+        mock_fitz_open.assert_called_once_with(FAKE_PDF)
+
+    @patch("os.path.exists", return_value=True)
+    @patch("fitz.open", side_effect=Exception("syntax error"))
+    def test_load_pdf_broken_content(self, mock_fitz_open, mock_os_exists):
+        with self.assertRaisesRegex(ValueError, "avaaminen epäonnistui: syntax error"):
+            self.repository.load_pdf(BROKEN_PDF)
+        mock_os_exists.assert_called_once_with(BROKEN_PDF)
+        mock_fitz_open.assert_called_once_with(BROKEN_PDF)
+
+    @patch("os.path.exists", return_value=True)
+    @patch("fitz.open", side_effect=Exception("premature end-of-file"))
+    def test_load_pdf_corrupt_truncated(self, mock_fitz_open, mock_os_exists):
+        with self.assertRaisesRegex(
+            ValueError, "avaaminen epäonnistui: premature end-of-file"
+        ):
+            self.repository.load_pdf(CORRUPT_TRUNCATED_PDF)
+        mock_os_exists.assert_called_once_with(CORRUPT_TRUNCATED_PDF)
+        mock_fitz_open.assert_called_once_with(CORRUPT_TRUNCATED_PDF)
 
     def test_get_page_count_success(self):
         self.mock_doc.page_count = 15

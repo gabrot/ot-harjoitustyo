@@ -14,8 +14,8 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 from PyQt6.QtCore import Qt, pyqtSignal
-from ui.styles.container_styles import ContainerStyles
-from ui.styles.button_styles import ButtonStyles
+from src.ui.styles.container_styles import ContainerStyles
+from src.ui.styles.button_styles import ButtonStyles
 
 
 class FileInfoSection(QFrame):

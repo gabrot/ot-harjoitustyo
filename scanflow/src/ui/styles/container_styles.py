@@ -5,7 +5,7 @@ Tämä moduuli sisältää tyylimäärittelyt kaikille säiliötyyppisille kompo
 kuten pudotusalueet, ryhmälaatikot ja muut säiliötyyppiset komponentit.
 """
 
-from ui.styles.base_styles import BaseStyles
+from src.ui.styles.base_styles import BaseStyles
 
 class ContainerStyles:
     """

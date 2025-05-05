@@ -15,8 +15,8 @@ from PyQt6.QtWidgets import (
     QFrame,
 )
 from PyQt6.QtCore import Qt, pyqtSlot
-from ui.styles.dialog_styles import DialogStyles
-from ui.styles.container_styles import ContainerStyles
+from src.ui.styles.dialog_styles import DialogStyles
+from src.ui.styles.container_styles import ContainerStyles
 
 
 class FixedRangeSettings(QWidget):

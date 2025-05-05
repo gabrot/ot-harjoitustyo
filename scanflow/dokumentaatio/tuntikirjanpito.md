@@ -34,5 +34,6 @@
 | 21.04.2025 | 5.0               | Uusien ominaisuuksien testailu ja korjaukset|
 | 21.04.2025 | 1.0               | macOS ja Linux testaus |
 | 21.04.2025 | 2.5               | Dokumentaation viimeistely |    
-|04.05.2025 | 4.0               | Loppu testaukset, dokumentaation viimeistely ja release  |   
-|Yhteensä   | 139       
+|04.05.2025 | 4.0               | Loppu testaukset, dokumentaation viimeistely  |   
+|05.05.2025 | 1.0               | Pienet korjaukset ja release  |   
+|Yhteensä   | 140       
